@@ -19,5 +19,5 @@ from typing import Any, Dict, Optional, Union
 from latyas.models.latyas_config import LatyasConfig
 
 
-class LayoutConfig(LatyasConfig):
+class OCRConfig(LatyasConfig):
     pass

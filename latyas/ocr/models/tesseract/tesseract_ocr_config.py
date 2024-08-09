@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-import os
-from typing import Any, Dict, Optional, Union
-from latyas.models.latyas_config import LatyasConfig
+from typing import Dict, Optional
+
+from latyas.ocr.models.ocr_config import OCRConfig
 
 
-class LayoutConfig(LatyasConfig):
-    pass
+class TesseractOCRConfig(OCRConfig):
+    model_type: str = "TesseractOCRModel"
+    tesseract_cmd: str

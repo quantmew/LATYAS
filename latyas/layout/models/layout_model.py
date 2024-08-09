@@ -16,7 +16,10 @@ from PIL import Image
 from abc import ABC, abstractmethod
 from typing import Union
 
-class LayoutModel(object):
+from latyas.models.latyas_model import LatyasModel
+
+
+class LayoutModel(LatyasModel):
     def __init__(self) -> None:
         pass
 

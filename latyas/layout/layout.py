@@ -13,9 +13,18 @@ class Layout(object):
         if blocks is None:
             blocks = []
         self._blocks: List[Block] = blocks
-        self._page: Optional[np.ndarray] = page
+        # TODO: if page is None
+        self._page: np.ndarray = page
+    
+    @property
+    def height(self) -> int:
+        return self._page.shape[0]
 
-    def __getitem__(self, key: Union[int, slice]):
+    @property
+    def width(self) -> int:
+        return self._page.shape[1]
+
+    def __getitem__(self, key: Union[int, slice]) -> Block:
         blocks = self._blocks[key]
         if isinstance(key, slice):
             return self.__class__(self._blocks[key], self._page)
@@ -31,7 +40,7 @@ class Layout(object):
     def __len__(self) -> int:
         return len(self._blocks)
 
-    def __iter__(self) -> Generator["Block", None, None]:
+    def __iter__(self) -> Generator[Block, None, None]:
         for ele in self._blocks:
             yield ele
 
@@ -89,6 +98,14 @@ class Layout(object):
         to_remove = sorted(list(set(to_remove)))
         for block_i in reversed(to_remove):
             self._blocks.pop(block_i)
+
+    def crop_image(self, block: Block) -> Optional[np.ndarray]:
+        if self._page is None:
+            return None
+        x1, y1, x2, y2 = block.shape.boundingbox
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        bbox_image = self._page[y1:y2, x1:x2]
+        return bbox_image
 
     def visualize(self, thickness=2) -> np.ndarray:
         vis = self._page.copy()

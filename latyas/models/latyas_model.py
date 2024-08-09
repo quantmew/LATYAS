@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 The LATYAS team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import numpy as np
+from PIL import Image
+from abc import ABC, abstractmethod
+from typing import Union
 
-import json
-import os
-from typing import Any, Dict, Optional, Union
-from latyas.models.latyas_config import LatyasConfig
-
-
-class LayoutConfig(LatyasConfig):
-    pass
+class LatyasModel(object):
+    def __init__(self) -> None:
+        pass

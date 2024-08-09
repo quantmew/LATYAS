@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 The LATYAS team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-import os
-from typing import Any, Dict, Optional, Union
-from latyas.models.latyas_config import LatyasConfig
+import numpy as np
+from PIL import Image
+from abc import ABC, abstractmethod
+from typing import Union
+
+from latyas.models.latyas_model import LatyasModel
 
 
-class LayoutConfig(LatyasConfig):
-    pass
+class OCRModel(LatyasModel):
+    def __init__(self) -> None:
+        pass
+
+    @abstractmethod
+    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> str:
+        pass

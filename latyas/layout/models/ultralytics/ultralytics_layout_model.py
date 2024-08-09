@@ -31,12 +31,12 @@ from .ultralytics_layout_config import UltralyticsLayoutConfig
 class UltralyticsLayoutModel(LayoutModel):
     def __init__(self, config: UltralyticsLayoutConfig) -> None:
         self.config = config
-        self._model_name_or_path = config._model_name_or_path
+        self._name_or_path = config._name_or_path
         self._checkpoint_path = config.checkpoint_path
-        if os.path.exists(self._model_name_or_path):
-            self.ckpt_path = os.path.join(self._model_name_or_path, self._checkpoint_path)
+        if os.path.exists(self._name_or_path):
+            self.ckpt_path = os.path.join(self._name_or_path, self._checkpoint_path)
         else:
-            self.ckpt_path = hf_hub_download(repo_id=self._model_name_or_path, filename=self._checkpoint_path)
+            self.ckpt_path = hf_hub_download(repo_id=self._name_or_path, filename=self._checkpoint_path)
         self.model = YOLO(self.ckpt_path)
 
     @classmethod
@@ -47,7 +47,7 @@ class UltralyticsLayoutModel(LayoutModel):
         **kwargs,
     ) -> 'UltralyticsLayoutModel':
         config = UltralyticsLayoutConfig.from_pretrained(pretrained_model_name_or_path)
-        config._model_name_or_path = pretrained_model_name_or_path
+        config._name_or_path = pretrained_model_name_or_path
         config._revision = revision
         return cls(config)
 
