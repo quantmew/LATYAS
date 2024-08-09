@@ -18,20 +18,18 @@ import numpy as np
 from PIL import Image
 from typing import Optional, Union
 
-import easyocr
+from paddleocr import PaddleOCR
 
 from latyas.ocr.models.ocr_model import OCRModel
 from latyas.ocr.ocr_utils import small_image_padding
-from .easyocr_ocr_config import EasyOCROCRConfig
-
-
-class EasyOCROCRModel(OCRModel):
-    def __init__(self, config: EasyOCROCRConfig) -> None:
+from .paddleocr_ocr_config import PaddleOCRConfig
+class PaddleOCRModel(OCRModel):
+    def __init__(self, config: PaddleOCRConfig) -> None:
         self.config = config
         self._name_or_path = config._name_or_path
-        self._lang_list = config.lang_list
+        self._lang = config.lang
 
-        self.model = easyocr.Reader(self._lang_list)
+        self.model = PaddleOCR(use_angle_cls=True, lang=self._lang)
 
     @classmethod
     def from_pretrained(
@@ -39,8 +37,8 @@ class EasyOCROCRModel(OCRModel):
         pretrained_model_name_or_path: Union[str, os.PathLike],
         revision: str = "main",
         **kwargs,
-    ) -> "EasyOCROCRModel":
-        config = EasyOCROCRConfig.from_pretrained(pretrained_model_name_or_path)
+    ) -> "PaddleOCRModel":
+        config = PaddleOCRConfig.from_pretrained(pretrained_model_name_or_path)
         config._name_or_path = pretrained_model_name_or_path
         config._revision = revision
         return cls(config)
@@ -55,7 +53,14 @@ class EasyOCROCRModel(OCRModel):
         # 如果图像的宽度或高度小于400，则放置在800x800的白色背景上
         if image_array.shape[0] < 400 or image_array.shape[1] < 400:
             image_array = small_image_padding(image_array)
-        result = self.model.readtext(
-            image_array, decoder="beamsearch", beamWidth=5, paragraph=True, detail=0
-        )
-        return "\n".join(result)
+        result = self.model.ocr(image_array, cls=True)
+        result_text = []
+        for idx in range(len(result)):
+            res = result[idx]
+            if res is None:
+                continue
+            for line in res:
+                bbox, (text, conf) = line
+                result_text.append(text.replace("\n", ""))
+
+        return "".join(result_text)

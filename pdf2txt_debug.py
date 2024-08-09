@@ -3,15 +3,20 @@ from latyas.layout.models.ultralytics.ultralytics_layout_model import Ultralytic
 
 model = UltralyticsLayoutModel.from_pretrained("XiaHan19/360LayoutAnalysis-general6-8n")
 
-from latyas.ocr.models.easyocr.easyocr_ocr_config import EasyOCROCRConfig
-from latyas.ocr.models.easyocr.easyocr_ocr_model import EasyOCROCRModel
-ocr_model = EasyOCROCRModel(EasyOCROCRConfig())
+# from latyas.ocr.models.easyocr.easyocr_ocr_config import EasyOCROCRConfig
+# from latyas.ocr.models.easyocr.easyocr_ocr_model import EasyOCROCRModel
+# ocr_model = EasyOCROCRModel(EasyOCROCRConfig())
+
+from latyas.ocr.models.paddleocr.paddleocr_ocr_config import PaddleOCRConfig
+from latyas.ocr.models.paddleocr.paddleocr_ocr_model import PaddleOCRModel
+ocr_model = PaddleOCRModel(PaddleOCRConfig())
 
 
 import pdf2image
 import cv2
 import numpy as np
 import os
+import tqdm
 file_path = "report2.pdf"
 pages = pdf2image.convert_from_path(file_path)
 for page_number, page in enumerate(pages):
@@ -22,7 +27,7 @@ for page_number, page in enumerate(pages):
     page_layout = model.detect(page_img)
     
     vis = page_layout.visualize()
-    cv2.imwrite(f'./outputs/output_{page_number}.png', vis)
+    cv2.imwrite(f'./outputs/output_{page_number}.jpg', vis)
 
     # Sort Blocks
     sorted_bbox = []
@@ -36,8 +41,8 @@ for page_number, page in enumerate(pages):
     with open(f'./outputs/output_{page_number}.txt', "w", encoding="utf-8") as f:
         for k, bbox_i in sorted_bbox:
             block = page_layout[bbox_i]
-            if block.kind in (BlockType.Text, BlockType.Text):
+            if block.kind in (BlockType.Text, BlockType.Title):
                 text = ocr_model.detect(page_layout.crop_image(block))
                 # text = text.replace("\n", "")
                 f.write(text)
-                f.write("\n\n\n\n")
+                f.write("\n\n")
