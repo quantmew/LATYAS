@@ -56,7 +56,7 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
     textpage = page.get_textpage()
     for k, bbox_i in sorted_bbox:
         block = page_layout[bbox_i]
-        if block.kind not in (BlockType.Text, BlockType.Title):
+        if block.kind not in (BlockType.Text, BlockType.Title, BlockType.Caption):
             continue
         x1, y1, x2, y2 = block.shape.boundingbox
         x_1, y_1, x_2, y_2 = x1 / rs, height - y2 / rs, x2 / rs, height - y1 / rs
@@ -93,6 +93,10 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
             text = pdf_text
         else:
             text = ocr_text
+        if block.kind in (BlockType.Title, BlockType.Caption):
+            text_list.append("\n\n")
+        else:
+            text_list.append("\n")
         text_list.append(text)
     textpage.close()
     return text_list
@@ -104,8 +108,8 @@ def main():
     try:
         for page_number, page in enumerate(pdf_reader):
             text = get_page_text(page_number, page)
-            with open(f"./outputs/text_{page_number}.txt", "w", encoding="utf-8") as f:
-                f.write("\n".join(text))
+            with open(f"./outputs/text_output.txt", "a", encoding="utf-8") as f:
+                f.write("".join(text))
             page.close()
     finally:
         pdf_reader.close()
