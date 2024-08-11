@@ -87,14 +87,14 @@ class Layout(object):
                 ):
                     if keep_larger:
                         if block_lhs.shape.area > block_rhs.shape.area:
-                            to_remove.append(block_i)
-                        else:
                             to_remove.append(block_j)
+                        else:
+                            to_remove.append(block_i)
                     else:
                         if block_lhs.shape.area < block_rhs.shape.area:
-                            to_remove.append(block_i)
-                        else:
                             to_remove.append(block_j)
+                        else:
+                            to_remove.append(block_i)
         to_remove = sorted(list(set(to_remove)))
         for block_i in reversed(to_remove):
             self._blocks.pop(block_i)

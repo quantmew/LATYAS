@@ -19,7 +19,7 @@ class BlockType(Enum):
     Footer = 9
     Reference = 10
     Equation = 11
-    ToC = 12
+    TOC = 12
     List = 13
 
     @classmethod
@@ -47,7 +47,7 @@ class BlockType(Enum):
         elif 'equation' in s.lower():
             return BlockType.Equation
         elif 'toc' in s.lower():
-            return BlockType.ToC
+            return BlockType.TOC
         elif 'list' in s.lower():
             return BlockType.List
         else:
@@ -67,7 +67,7 @@ BLOCK_TYPE_COLOR_MAP = {
     BlockType.Footer: (165, 42, 42),     # 棕色
     BlockType.Reference: (255, 192, 203), # 粉色
     BlockType.Equation: (128, 128, 128), # 灰色
-    BlockType.ToC: (0, 128, 128),        # 水鸭绿
+    BlockType.TOC: (0, 128, 128),        # 水鸭绿
     BlockType.List: (128, 128, 0)        # 橄榄色
 }
 

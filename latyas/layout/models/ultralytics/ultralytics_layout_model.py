@@ -77,6 +77,7 @@ class UltralyticsLayoutModel(LayoutModel):
             label_id = result.boxes.cls[bbox_i].item()
             conf = result.boxes.conf[bbox_i].item()
             x, y, x2, y2 = result.boxes.xyxy[bbox_i, :].cpu().numpy()
+            x, y, x2, y2 = float(x), float(y), float(x2), float(y2)
             if conf > threshold:
                 page_layout.insert(
                     0,
