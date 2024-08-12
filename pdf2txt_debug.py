@@ -1,6 +1,6 @@
-# from latyas.layout.block import Block, BlockType
 # from latyas.layout.models.ultralytics.ultralytics_layout_model import UltralyticsLayoutModel
 # model = UltralyticsLayoutModel.from_pretrained("XiaHan19/360LayoutAnalysis-general6-8n")
+
 
 from latyas.layout.models.texteller.texteller_layout_model import TexTellerLayoutModel
 model = TexTellerLayoutModel.from_pretrained("XiaHan19/texteller_rtdetr_r50vd_6x_coco")
@@ -14,6 +14,7 @@ from latyas.ocr.models.paddleocr.paddleocr_ocr_model import PaddleOCRModel
 ocr_model = PaddleOCRModel(PaddleOCRConfig())
 
 
+from latyas.layout.block import Block, BlockType
 import pdf2image
 import cv2
 import numpy as np

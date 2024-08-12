@@ -48,7 +48,7 @@ class PredictConfig(object):
             print(
                 'The RCNN export model is used for ONNX and it only supports batch_size = 1'
             )
-        self.print_config()
+        # self.print_config()
 
     def check_model(self, yml_conf):
         """

@@ -25,8 +25,6 @@ from onnxruntime import InferenceSession
 from .det_model.inference import PredictConfig
 from .thrid_party.paddleocr.infer import predict_det, predict_rec
 from .det_model.inference import predict as latex_det_predict
-from .ocr_model.utils.inference import inference as latex_inference
-from .utils import mix_inference
 
 from huggingface_hub import hf_hub_download
 
@@ -79,7 +77,7 @@ class TexTellerLayoutModel(LayoutModel):
             if bbox.label == "isolated":
                 block_type = BlockType.Equation
             else:
-                block_type = BlockType.EmbeddingEquation
+                block_type = BlockType.EmbedEq
             page_layout.insert(
                 0,
                 Block(Rectangle(x, y, x2, y2), block_type),
