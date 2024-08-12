@@ -8,29 +8,29 @@
 </p>
 
 ## What is LATYAS
-LATYAS aims to provide a wide range of tools that aims to streamline Document Image Analysis (DIA) tasks, which is similar to [layout-parser](https://github.com/Layout-Parser/layout-parser).
+LATYAS（Layout Analysis Toolkit Yet Another Solution）是一个旨在简化文档图像分析（DIA）任务的工具集，类似于 [layout-parser](https://github.com/Layout-Parser/layout-parser).
 
-## Installation
+## 安装
 
-### Method 1: With pip
+### 方法 1: 使用pip
 ```bash
 pip install git+https://github.com/quantmew/LATYAS.git 
 ```
 
-### Method 2: From the source
+### 方法 2: 从源码安装
 
-1. Clone this repository
+1. 克隆此存储库
 ```bash
 git clone https://github.com/quantmew/LATYAS.git
 cd LATYAS
 ```
 
-2. Install the Package
+2. 安装包
 ```bash
 pip install --upgrade pip
 pip install -e .
 ```
 
-## Quick start
+## 快速开始
 
 

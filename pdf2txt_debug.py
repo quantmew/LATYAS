@@ -1,7 +1,9 @@
-from latyas.layout.block import Block, BlockType
-from latyas.layout.models.ultralytics.ultralytics_layout_model import UltralyticsLayoutModel
+# from latyas.layout.block import Block, BlockType
+# from latyas.layout.models.ultralytics.ultralytics_layout_model import UltralyticsLayoutModel
+# model = UltralyticsLayoutModel.from_pretrained("XiaHan19/360LayoutAnalysis-general6-8n")
 
-model = UltralyticsLayoutModel.from_pretrained("XiaHan19/360LayoutAnalysis-general6-8n")
+from latyas.layout.models.texteller.texteller_layout_model import TexTellerLayoutModel
+model = TexTellerLayoutModel.from_pretrained("XiaHan19/texteller_rtdetr_r50vd_6x_coco")
 
 # from latyas.ocr.models.easyocr.easyocr_ocr_config import EasyOCROCRConfig
 # from latyas.ocr.models.easyocr.easyocr_ocr_model import EasyOCROCRModel
@@ -17,6 +19,13 @@ import cv2
 import numpy as np
 import os
 import tqdm
+
+output_path = "./outputs/"
+
+if not os.path.exists(output_path):
+    os.makedirs(output_path, exist_ok=True)
+
+
 file_path = "report2.pdf"
 pages = pdf2image.convert_from_path(file_path)
 for page_number, page in enumerate(pages):
@@ -27,7 +36,7 @@ for page_number, page in enumerate(pages):
     page_layout = model.detect(page_img)
     
     vis = page_layout.visualize()
-    cv2.imwrite(f'./outputs/output_{page_number}.jpg', vis)
+    cv2.imwrite(os.path.join(output_path, f'output_{page_number}.jpg'), vis)
 
     # Sort Blocks
     sorted_bbox = []
@@ -38,7 +47,7 @@ for page_number, page in enumerate(pages):
     sorted_bbox = sorted(sorted_bbox, key=lambda x: x[0])
 
     # OCR
-    with open(f'./outputs/output_{page_number}.txt', "w", encoding="utf-8") as f:
+    with open(os.path.join(output_path, f'output_{page_number}.txt'), "w", encoding="utf-8") as f:
         for k, bbox_i in sorted_bbox:
             block = page_layout[bbox_i]
             if block.kind in (BlockType.Text, BlockType.Title):

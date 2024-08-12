@@ -19,8 +19,12 @@ class BlockType(Enum):
     Footer = 9
     Reference = 10
     Equation = 11
-    TOC = 12
-    List = 13
+    EmbeddingEquation = 12
+    TOC = 13
+    List = 14
+    Icon = 15
+    QRCode = 16
+    BarCode = 17
 
     @classmethod
     def from_str(cls, s: str) -> 'BlockType':
@@ -44,12 +48,20 @@ class BlockType(Enum):
             return BlockType.Footer
         elif 'reference' in s.lower():
             return BlockType.Reference
+        elif 'embeddingequation' in s.lower():
+            return BlockType.EmbeddingEquation
         elif 'equation' in s.lower():
             return BlockType.Equation
         elif 'toc' in s.lower():
             return BlockType.TOC
         elif 'list' in s.lower():
             return BlockType.List
+        elif 'icon' in s.lower():
+            return BlockType.Icon
+        elif 'qrcode' in s.lower():
+            return BlockType.QRCode
+        elif 'barcode' in s.lower():
+            return BlockType.BarCode
         else:
             return BlockType.Unknown
 
@@ -67,8 +79,13 @@ BLOCK_TYPE_COLOR_MAP = {
     BlockType.Footer: (165, 42, 42),     # 棕色
     BlockType.Reference: (255, 192, 203), # 粉色
     BlockType.Equation: (128, 128, 128), # 灰色
+    BlockType.EmbeddingEquation: (100, 100, 100), # 灰色
     BlockType.TOC: (0, 128, 128),        # 水鸭绿
-    BlockType.List: (128, 128, 0)        # 橄榄色
+    BlockType.List: (128, 128, 0),        # 橄榄色
+    BlockType.Icon: (0, 0, 0), # 黑色
+    BlockType.QRCode: (0, 128, 0), # 绿色
+    BlockType.BarCode: (128, 0, 0), # 深红色
+    BlockType.Unknown: (192, 192, 192), # 浅灰色
 }
 
 class Block(object):

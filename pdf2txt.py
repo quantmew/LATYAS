@@ -24,6 +24,29 @@ import os
 import tqdm
 
 
+def get_text_by_bbox(textpage, x_1, y_1, x_2, y_2) -> str:
+    
+    # The page coordinate system's starting point (0,0) is the left-bottom corner of a page.
+    # The Y axis is directed from the bottom of the page to the top.
+    pdf_text = ""
+    rects_n = textpage.count_rects()
+    for rect_i in range(rects_n):
+        rect_cord = textpage.get_rect(rect_i)
+        lhs_rect = Rectangle(rect_cord[0], rect_cord[1], rect_cord[2], rect_cord[3])
+        rhs_rect = Rectangle(x_1, y_1, x_2, y_2)
+
+        overlap_area = lhs_rect.intersect(rhs_rect).area / min(
+            lhs_rect.area, rhs_rect.area
+        )
+
+        if overlap_area > 0.5:
+            pdf_text_line = textpage.get_text_bounded(
+                left=rect_cord[0], bottom=rect_cord[1], right=rect_cord[2], top=rect_cord[3]
+            ).replace("\n", "")
+            pdf_text += pdf_text_line
+    return pdf_text
+
+
 def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
     width, height = page.get_size()
     render_scale = rs = 2
@@ -60,27 +83,8 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
             continue
         x1, y1, x2, y2 = block.shape.boundingbox
         x_1, y_1, x_2, y_2 = x1 / rs, height - y2 / rs, x2 / rs, height - y1 / rs
-
         ocr_text = ocr_model.detect(page_layout.crop_image(block))
-        # The page coordinate system's starting point (0,0) is the left-bottom corner of a page.
-        # The Y axis is directed from the bottom of the page to the top.
-        pdf_text = ""
-        rects_n = textpage.count_rects()
-        for rect_i in range(rects_n):
-            rect_cord = textpage.get_rect(rect_i)
-            lhs_rect = Rectangle(rect_cord[0], rect_cord[1], rect_cord[2], rect_cord[3])
-            rhs_rect = Rectangle(x_1, y_1, x_2, y_2)
-
-            overlap_area = lhs_rect.intersect(rhs_rect).area / min(
-                lhs_rect.area, rhs_rect.area
-            )
-
-            if overlap_area > 0.5:
-                pdf_text_line = textpage.get_text_bounded(
-                    left=rect_cord[0], bottom=rect_cord[1], right=rect_cord[2], top=rect_cord[3]
-                ).replace("\n", "")
-                pdf_text += pdf_text_line
-
+        pdf_text = get_text_by_bbox(textpage, x_1, y_1, x_2, y_2)
         print("=========== OCR Text =============")
         print(ocr_text)
         print("=========== PDF Text =============")
@@ -93,8 +97,12 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
             text = pdf_text
         else:
             text = ocr_text
+        if text.startswith("图") or text.startswith("表"):
+            continue
+        if len(text) < 256 and ("见表" in text or "见图" in text):
+            continue
         if block.kind in (BlockType.Title, BlockType.Caption):
-            text_list.append("\n\n")
+            text_list.append("\n==========\n")
         else:
             text_list.append("\n")
         text_list.append(text)
@@ -106,11 +114,14 @@ def main():
     file_path = "report2.pdf"
     pdf_reader = pypdfium2.PdfDocument(file_path, autoclose=True)
     try:
+        texts = []
         for page_number, page in enumerate(pdf_reader):
             text = get_page_text(page_number, page)
-            with open(f"./outputs/text_output.txt", "a", encoding="utf-8") as f:
-                f.write("".join(text))
+            texts.append(text)
             page.close()
+        with open(f"./outputs/text_output.txt", "w", encoding="utf-8") as f:
+            for text in texts:
+                f.write("".join(text))
     finally:
         pdf_reader.close()
 
