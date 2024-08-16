@@ -11,6 +11,7 @@ from latyas.ocr.models.texteller.texteller_ocr_model import TexTellerOCRModel
 
 class ReportPipeline(BasePipeline):
     def __init__(self) -> None:
+        super().__init__()
         self.add_layout_model("layout_360general", UltralyticsLayoutModel.from_pretrained(
             "XiaHan19/360LayoutAnalysis-general6-8n"
         ))
