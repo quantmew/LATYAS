@@ -3,6 +3,8 @@ from latyas.layout.block import Block, BlockType
 from latyas.layout.models.ultralytics.ultralytics_layout_model import (
     UltralyticsLayoutModel,
 )
+from latyas.layout.sorting.position_based.position_sorting import position_sorting
+from latyas.layout.sorting.semantic_based.bert_sorting import bert_sorting
 from latyas.utils.text_utils import levenshtein_distance
 
 model = UltralyticsLayoutModel.from_pretrained("XiaHan19/360LayoutAnalysis-general6-8n")
@@ -57,27 +59,12 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
     pil_image = bitmap.to_pil()
 
     page_img = np.asarray(pil_image)
-    page_shape = page_img.shape  # (h, w, c)
-    sf = (page_shape[0] // 256, page_shape[1] // 3)
-
     page_layout = model.detect(page_img)
-
-    vis = page_layout.visualize()
-    vis = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
-    cv2.imwrite(f"./outputs/output_{page_number}.jpg", vis)
-
-    # Sort Blocks
-    sorted_bbox = []
-    for bbox_i in range(len(page_layout)):
-        x, y, x2, y2 = page_layout[bbox_i].shape.boundingbox
-        x, y, x2, y2 = int(x), int(y), int(x2), int(y2)
-        sorted_bbox.append(((x // sf[1], y // sf[0], x2 // sf[1], y2 // sf[0]), bbox_i))
-    sorted_bbox = sorted(sorted_bbox, key=lambda x: x[0])
 
     # OCR
     text_list = []
     textpage = page.get_textpage()
-    for k, bbox_i in sorted_bbox:
+    for bbox_i in range(len(page_layout)):
         block = page_layout[bbox_i]
         if block.kind not in (BlockType.Text, BlockType.Title, BlockType.Caption):
             continue
@@ -105,13 +92,21 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
             text_list.append("\n==========\n")
         else:
             text_list.append("\n")
+        block.set_text(text)
         text_list.append(text)
     textpage.close()
+    
+    sorted_block_indices = position_sorting(page_layout)
+    page_layout._blocks = [page_layout._blocks[i] for i in sorted_block_indices]
+
+    # write images
+    vis = page_layout.visualize()
+    vis = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
+    cv2.imwrite(f"./outputs/output_{page_number}.jpg", vis)
     return text_list
 
-
 def main():
-    file_path = "report2.pdf"
+    file_path = "report3.pdf"
     pdf_reader = pypdfium2.PdfDocument(file_path, autoclose=True)
     try:
         texts = []

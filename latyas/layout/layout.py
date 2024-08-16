@@ -1,3 +1,4 @@
+import warnings
 import cv2
 import numpy as np
 from typing import Generator, List, Optional, Union
@@ -58,6 +59,10 @@ class Layout(object):
         self._blocks.insert(key, value)
 
     def page_sort(self, reverse=False):
+        """
+        Deprecated
+        """
+        warnings.warn("deprecated", DeprecationWarning)
         sf = (self._page.shape[0] // 256, self._page.shape[1] // 3)
         sorted_bbox = []
         for bbox_i in range(len(self._blocks)):

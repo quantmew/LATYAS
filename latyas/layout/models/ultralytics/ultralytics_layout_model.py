@@ -83,6 +83,6 @@ class UltralyticsLayoutModel(LayoutModel):
                     0,
                     Block(Rectangle(x, y, x2, y2), BlockType.from_str(names[label_id])),
                 )
-        page_layout.page_sort()
+        # page_layout.page_sort()
         page_layout.remove_overlapping()
         return page_layout

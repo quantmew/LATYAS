@@ -1,6 +1,6 @@
 
 
-from typing import Union
+from typing import Optional, Union
 from latyas.layout.shape import Shape
 
 
@@ -92,7 +92,7 @@ class Block(object):
     def __init__(self, shape: Shape, kind: BlockType=BlockType.Unknown) -> None:
         self._shape = shape
         self._kind = kind
-        self._text: Union[str] = None
+        self._text: Optional[str] = None
     
     @property
     def shape(self) -> Shape:
@@ -101,3 +101,10 @@ class Block(object):
     @property
     def kind(self) -> BlockType:
         return self._kind
+    
+    @property
+    def text(self) -> Optional[str]:
+        return self._text
+    
+    def set_text(self, text: str):
+        self._text = text

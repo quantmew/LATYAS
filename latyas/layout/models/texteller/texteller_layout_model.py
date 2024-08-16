@@ -83,6 +83,6 @@ class TexTellerLayoutModel(LayoutModel):
                 Block(Rectangle(x, y, x2, y2), block_type),
             )
 
-        page_layout.page_sort()
+        # page_layout.page_sort()
         page_layout.remove_overlapping()
         return page_layout
