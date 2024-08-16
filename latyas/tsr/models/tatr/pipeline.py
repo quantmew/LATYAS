@@ -9,7 +9,7 @@ from fitz import Rect
 from detr.models import build_model
 import xml.etree.ElementTree as ET
 
-import .postprocess
+from .postprocess import align_columns, align_rows, apply_threshold, extract_text_from_spans, nms, align_supercells, nms_supercells, header_supercell_tree, refine_columns, refine_rows, slot_into_containers, sort_objects_left_to_right, sort_objects_top_to_bottom
 
 class MaxResize(object):
     def __init__(self, max_size=800):
@@ -152,24 +152,24 @@ def refine_table_structure(table_structure, class_thresholds):
 
     # Process the headers
     column_headers = table_structure['column headers']
-    column_headers = postprocess.apply_threshold(column_headers, class_thresholds["table column header"])
-    column_headers = postprocess.nms(column_headers)
+    column_headers = apply_threshold(column_headers, class_thresholds["table column header"])
+    column_headers = nms(column_headers)
     column_headers = align_headers(column_headers, rows)
 
     # Process spanning cells
     spanning_cells = [elem for elem in table_structure['spanning cells'] if not elem['projected row header']]
     projected_row_headers = [elem for elem in table_structure['spanning cells'] if elem['projected row header']]
-    spanning_cells = postprocess.apply_threshold(spanning_cells, class_thresholds["table spanning cell"])
-    projected_row_headers = postprocess.apply_threshold(projected_row_headers,
+    spanning_cells = apply_threshold(spanning_cells, class_thresholds["table spanning cell"])
+    projected_row_headers = apply_threshold(projected_row_headers,
                                                         class_thresholds["table projected row header"])
     spanning_cells += projected_row_headers
     # Align before NMS for spanning cells because alignment brings them into agreement
     # with rows and columns first; if spanning cells still overlap after this operation,
     # the threshold for NMS can basically be lowered to just above 0
-    spanning_cells = postprocess.align_supercells(spanning_cells, rows, columns)
-    spanning_cells = postprocess.nms_supercells(spanning_cells)
+    spanning_cells = align_supercells(spanning_cells, rows, columns)
+    spanning_cells = nms_supercells(spanning_cells)
 
-    postprocess.header_supercell_tree(spanning_cells)
+    header_supercell_tree(spanning_cells)
 
     table_structure['columns'] = columns
     table_structure['rows'] = rows
@@ -330,8 +330,8 @@ def objects_to_structures(objects, tokens, class_thresholds):
                     obj['column header'] = True
 
         # Refine table structures
-        rows = postprocess.refine_rows(rows, table_tokens, class_thresholds['table row'])
-        columns = postprocess.refine_columns(columns, table_tokens, class_thresholds['table column'])
+        rows = refine_rows(rows, table_tokens, class_thresholds['table row'])
+        columns = refine_columns(columns, table_tokens, class_thresholds['table column'])
 
         # Shrink table bbox to just the total height of the rows
         # and the total width of the columns
@@ -345,8 +345,8 @@ def objects_to_structures(objects, tokens, class_thresholds):
         table['bbox'] = table['row_column_bbox']
 
         # Process the rows and columns into a complete segmented table
-        columns = postprocess.align_columns(columns, table['row_column_bbox'])
-        rows = postprocess.align_rows(rows, table['row_column_bbox'])
+        columns = align_columns(columns, table['row_column_bbox'])
+        rows = align_rows(rows, table['row_column_bbox'])
 
         structure['rows'] = rows
         structure['columns'] = columns
@@ -429,7 +429,7 @@ def structure_to_cells(table_structure, tokens):
 
     # Compute a confidence score based on how well the page tokens
     # slot into the cells reported by the model
-    _, _, cell_match_scores = postprocess.slot_into_containers(cells, tokens)
+    _, _, cell_match_scores = slot_into_containers(cells, tokens)
     try:
         mean_match_score = sum(cell_match_scores) / len(cell_match_scores)
         min_match_score = min(cell_match_scores)
@@ -452,21 +452,21 @@ def structure_to_cells(table_structure, tokens):
         cell_rect = column_rect.intersect(row_rect)
         cell['bbox'] = list(cell_rect)
 
-    span_nums_by_cell, _, _ = postprocess.slot_into_containers(cells, tokens, overlap_threshold=0.001,
+    span_nums_by_cell, _, _ = slot_into_containers(cells, tokens, overlap_threshold=0.001,
                                                                unique_assignment=True, forced_assignment=False)
 
     for cell, cell_span_nums in zip(cells, span_nums_by_cell):
         cell_spans = [tokens[num] for num in cell_span_nums]
         # TODO: Refine how text is extracted; should be character-based, not span-based;
         # but need to associate 
-        cell['cell text'] = postprocess.extract_text_from_spans(cell_spans, remove_integer_superscripts=False)
+        cell['cell text'] = extract_text_from_spans(cell_spans, remove_integer_superscripts=False)
         cell['spans'] = cell_spans
         
     # Adjust the row, column, and cell bounding boxes to reflect the extracted text
     num_rows = len(rows)
-    rows = postprocess.sort_objects_top_to_bottom(rows)
+    rows = sort_objects_top_to_bottom(rows)
     num_columns = len(columns)
-    columns = postprocess.sort_objects_left_to_right(columns)
+    columns = sort_objects_left_to_right(columns)
     min_y_values_by_row = defaultdict(list)
     max_y_values_by_row = defaultdict(list)
     min_x_values_by_column = defaultdict(list)

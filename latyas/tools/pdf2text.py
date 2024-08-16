@@ -1,24 +1,20 @@
+import argparse
 from typing import List
 from latyas.layout.block import Block, BlockType
-from latyas.layout.models.ultralytics.ultralytics_layout_model import (
-    UltralyticsLayoutModel,
-)
+
+from latyas.layout.models.layout_model import LayoutModel
 from latyas.layout.reflow.position_based.position_reflow import position_reflow
 from latyas.layout.reflow.position_based.xy_cut_reflow import xy_cut_reflow
 from latyas.layout.reflow.semantic_based.bert_reflow import bert_reflow
+from latyas.ocr.models.ocr_model import OCRModel
 from latyas.utils.text_utils import levenshtein_distance
 
-model = UltralyticsLayoutModel.from_pretrained("XiaHan19/360LayoutAnalysis-general6-8n")
 
 # from latyas.ocr.models.easyocr.easyocr_ocr_config import EasyOCROCRConfig
 # from latyas.ocr.models.easyocr.easyocr_ocr_model import EasyOCROCRModel
 # ocr_model = EasyOCROCRModel(EasyOCROCRConfig())
 
-from latyas.ocr.models.paddleocr.paddleocr_ocr_config import PaddleOCRConfig
-from latyas.ocr.models.paddleocr.paddleocr_ocr_model import PaddleOCRModel
 from latyas.layout.shape import Rectangle
-
-ocr_model = PaddleOCRModel(PaddleOCRConfig())
 
 import pypdfium2
 import cv2
@@ -50,7 +46,7 @@ def get_text_by_bbox(textpage, x_1, y_1, x_2, y_2) -> str:
     return pdf_text
 
 
-def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
+def get_page_text(layout_model: LayoutModel, ocr_model: OCRModel, page_number: int, page: pypdfium2.PdfPage, threshold: float=0.2) -> List[str]:
     width, height = page.get_size()
     render_scale = rs = 2
     bitmap = page.render(
@@ -60,7 +56,7 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
     pil_image = bitmap.to_pil()
 
     page_img = np.asarray(pil_image)
-    page_layout = model.detect(page_img)
+    page_layout = layout_model.detect(page_img)
 
     # OCR
     textpage = page.get_textpage()
@@ -72,22 +68,18 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
         x_1, y_1, x_2, y_2 = x1 / rs, height - y2 / rs, x2 / rs, height - y1 / rs
         ocr_text = ocr_model.detect(page_layout.crop_image(block))
         pdf_text = get_text_by_bbox(textpage, x_1, y_1, x_2, y_2)
-        print("=========== OCR Text =============")
-        print(ocr_text)
-        print("=========== PDF Text =============")
-        print(pdf_text)
+        # print("=========== OCR Text =============")
+        # print(ocr_text)
+        # print("=========== PDF Text =============")
+        # print(pdf_text)
         dis = levenshtein_distance(ocr_text, pdf_text)
         dis_percent = dis / max(len(ocr_text), len(pdf_text))
-        print(f"编辑距离：{dis_percent}")
+        # print(f"编辑距离：{dis_percent}")
 
-        if dis_percent < 0.2:
+        if dis_percent < threshold:
             text = pdf_text
         else:
             text = ocr_text
-        if text.startswith("图") or text.startswith("表"):
-            continue
-        if len(text) < 256 and ("见表" in text or "见图" in text):
-            continue
         block.set_text(text)
     textpage.close()
     
@@ -95,26 +87,44 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
     page_layout._blocks = [page_layout._blocks[i] for i in sorted_block_indices]
 
     # write images
-    vis = page_layout.visualize()
-    vis = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
-    cv2.imwrite(f"./outputs/output_{page_number}.jpg", vis)
+    # vis = page_layout.visualize()
+    # vis = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
+    # cv2.imwrite(f"./outputs/output_{page_number}.jpg", vis)
     return [page_layout._blocks[i]._text for i in range(len(page_layout)) if page_layout._blocks[i]._text is not None]
 
-def main():
-    file_path = "report3.pdf"
-    pdf_reader = pypdfium2.PdfDocument(file_path, autoclose=True)
+def pdf2text(pdf_path: str):
+    from latyas.layout.models.ultralytics.ultralytics_layout_model import (
+        UltralyticsLayoutModel,
+    )
+    layout_model = UltralyticsLayoutModel.from_pretrained("XiaHan19/360LayoutAnalysis-general6-8n")
+    from latyas.ocr.models.paddleocr.paddleocr_ocr_config import PaddleOCRConfig
+    from latyas.ocr.models.paddleocr.paddleocr_ocr_model import PaddleOCRModel
+    ocr_model = PaddleOCRModel(PaddleOCRConfig())
+
+    pdf_reader = pypdfium2.PdfDocument(pdf_path, autoclose=True)
+    texts = []
     try:
-        texts = []
         for page_number, page in enumerate(pdf_reader):
-            text = get_page_text(page_number, page)
+            text = get_page_text(layout_model, ocr_model, page_number, page)
             texts.append(text)
             page.close()
-        with open(f"./outputs/text_output.txt", "w", encoding="utf-8") as f:
-            for text in texts:
-                f.write("\n====\n".join(text))
+
     finally:
         pdf_reader.close()
+    return texts
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Process a PDF file.')
+    parser.add_argument('--pdf', type=str, help='Path to the PDF file')
+    parser.add_argument('--out', type=str, help='Path to the text file')
+    
+    args = parser.parse_args()
+    
+    pdf_path = args.pdf
+    print(f'PDF file path: {pdf_path}')
+
+    texts = pdf2text(pdf_path)
+    with open(args.out, "w", encoding="utf-8") as f:
+        for text in texts:
+            f.write("\n==========\n".join(text))
