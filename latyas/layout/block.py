@@ -105,6 +105,6 @@ class Block(object):
     @property
     def text(self) -> Optional[str]:
         return self._text
-    
+
     def set_text(self, text: str):
         self._text = text

@@ -16,6 +16,7 @@ from PIL import Image
 from abc import ABC, abstractmethod
 from typing import Union
 
+from latyas.layout.layout import Layout
 from latyas.models.latyas_model import LatyasModel
 
 
@@ -24,5 +25,5 @@ class LayoutModel(LatyasModel):
         pass
 
     @abstractmethod
-    def detect(self, image: Union["np.ndarray", "Image.Image"]):
+    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> Layout:
         pass

@@ -1,7 +1,8 @@
+import copy
 import warnings
 import cv2
 import numpy as np
-from typing import Generator, List, Optional, Union
+from typing import Generator, List, Optional, Tuple, Union
 
 from latyas.layout.block import BLOCK_TYPE_COLOR_MAP, Block, BlockType
 from latyas.layout.shape import Rectangle
@@ -54,10 +55,19 @@ class Layout(object):
             return self._blocks == other._blocks
         else:
             return False
-
+    
+    def copy(self) -> "Layout":
+        return Layout(
+            blocks=copy.deepcopy(self._blocks),
+            page=self._page.copy()
+        )
+    
     def insert(self, key: int, value: Block):
         self._blocks.insert(key, value)
 
+    def merge(self, other: "Layout"):
+        self._blocks.extend(other._blocks)
+    
     def page_sort(self, reverse=False):
         """
         Deprecated
@@ -111,6 +121,13 @@ class Layout(object):
         x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
         bbox_image = self._page[y1:y2, x1:x2]
         return bbox_image
+    
+    def mask_image(self, block: Block, color: Union[str, Tuple[int, int, int]] = (255, 255, 255)):
+        if self._page is None:
+            return None
+        x1, y1, x2, y2 = block.shape.boundingbox
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        self._page[y1:y2, x1:x2, :] = color # TODO: support hex color
 
     def visualize(self, thickness=2) -> np.ndarray:
         vis = self._page.copy()
