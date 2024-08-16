@@ -35,6 +35,9 @@ class Shape:
     @property
     @abstractmethod
     def boundingbox(self) -> Tuple[float, float, float, float]:
+        """
+        x_1, y_1, x_2, y_2
+        """
         pass
     
     @property

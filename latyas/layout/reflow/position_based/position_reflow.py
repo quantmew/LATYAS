@@ -5,7 +5,7 @@ from typing import List
 from latyas.layout.layout import Layout
 
 
-def position_sorting(page_layout: Layout, h_chunk: int = 256, w_chunk: int = 3) -> List[int]:
+def position_reflow(page_layout: Layout, h_chunk: int = 256, w_chunk: int = 3) -> List[int]:
     page_img = page_layout._page
     page_shape = page_img.shape  # (h, w, c)
     sf = (page_shape[0] // h_chunk, page_shape[1] // w_chunk)

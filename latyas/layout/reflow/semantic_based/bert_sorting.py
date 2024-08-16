@@ -6,7 +6,7 @@ from latyas.layout.layout import Layout
 from transformers import AutoTokenizer, BertTokenizer, BertForNextSentencePrediction
 import torch
 
-from latyas.layout.sorting.position_based.position_sorting import position_sorting
+from latyas.layout.reflow.position_based.position_reflow import position_sorting
 
 
 def bert_sorting(page_layout: Layout, threshold=3) -> List[int]:

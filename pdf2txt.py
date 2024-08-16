@@ -3,8 +3,9 @@ from latyas.layout.block import Block, BlockType
 from latyas.layout.models.ultralytics.ultralytics_layout_model import (
     UltralyticsLayoutModel,
 )
-from latyas.layout.sorting.position_based.position_sorting import position_sorting
-from latyas.layout.sorting.semantic_based.bert_sorting import bert_sorting
+from latyas.layout.reflow.position_based.position_reflow import position_reflow
+from latyas.layout.reflow.position_based.xy_cut_reflow import xy_cut_reflow
+from latyas.layout.reflow.semantic_based.bert_reflow import bert_reflow
 from latyas.utils.text_utils import levenshtein_distance
 
 model = UltralyticsLayoutModel.from_pretrained("XiaHan19/360LayoutAnalysis-general6-8n")
@@ -62,7 +63,6 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
     page_layout = model.detect(page_img)
 
     # OCR
-    text_list = []
     textpage = page.get_textpage()
     for bbox_i in range(len(page_layout)):
         block = page_layout[bbox_i]
@@ -88,22 +88,17 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
             continue
         if len(text) < 256 and ("见表" in text or "见图" in text):
             continue
-        if block.kind in (BlockType.Title, BlockType.Caption):
-            text_list.append("\n==========\n")
-        else:
-            text_list.append("\n")
         block.set_text(text)
-        text_list.append(text)
     textpage.close()
     
-    sorted_block_indices = position_sorting(page_layout)
+    sorted_block_indices = xy_cut_reflow(page_layout)
     page_layout._blocks = [page_layout._blocks[i] for i in sorted_block_indices]
 
     # write images
     vis = page_layout.visualize()
     vis = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
     cv2.imwrite(f"./outputs/output_{page_number}.jpg", vis)
-    return text_list
+    return [page_layout._blocks[i]._text for i in range(len(page_layout))]
 
 def main():
     file_path = "report3.pdf"
@@ -116,7 +111,7 @@ def main():
             page.close()
         with open(f"./outputs/text_output.txt", "w", encoding="utf-8") as f:
             for text in texts:
-                f.write("".join(text))
+                f.write("\n====\n".join(text))
     finally:
         pdf_reader.close()
 
