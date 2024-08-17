@@ -101,7 +101,7 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
     return [page_layout._blocks[i]._text for i in range(len(page_layout)) if page_layout._blocks[i]._text is not None]
 
 def main():
-    file_path = "report3.pdf"
+    file_path = "report4.pdf"
     pdf_reader = pypdfium2.PdfDocument(file_path, autoclose=True)
     try:
         texts = []

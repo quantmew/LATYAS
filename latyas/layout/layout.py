@@ -1,10 +1,9 @@
-import copy
 import warnings
 import cv2
 import numpy as np
-from typing import Generator, List, Optional, Tuple, Union
+from typing import Generator, List, Literal, Optional, Tuple, Union
 
-from latyas.layout.block import BLOCK_TYPE_COLOR_MAP, Block, BlockType
+from latyas.layout.block import BLOCK_TYPE_COLOR_MAP, Block, BlockType, is_text_block
 from latyas.layout.shape import Rectangle
 
 
@@ -58,7 +57,7 @@ class Layout(object):
     
     def copy(self) -> "Layout":
         return Layout(
-            blocks=copy.deepcopy(self._blocks),
+            blocks=[block.copy() for block in self._blocks],
             page=self._page.copy()
         )
     
@@ -84,7 +83,7 @@ class Layout(object):
         sorted_bbox = sorted(sorted_bbox, key=lambda x: x[0], reverse=reverse)
         self._blocks = [self._blocks[bbox_i] for k, bbox_i in sorted_bbox]
 
-    def remove_overlapping(self, area_threshold=0.5, keep_larger=True):
+    def remove_overlapping(self, area_threshold=0.5, strategy: Literal["keep_large", "keep_small", "merge"]="merge"):
         to_remove = []
         for block_i in range(len(self._blocks)):
             for block_j in range(block_i + 1, len(self._blocks)):
@@ -94,22 +93,38 @@ class Layout(object):
                     continue
                 if not isinstance(block_rhs.shape, Rectangle):
                     continue
+                
+                if not (is_text_block(block_lhs.kind) and is_text_block(block_rhs.kind)):
+                    if block_lhs.kind != block_rhs.kind:
+                        continue
 
                 intersect_rect = block_lhs.shape.intersect(block_rhs.shape)
                 if (
                     intersect_rect.area > area_threshold * block_lhs.shape.area
                     or intersect_rect.area > area_threshold * block_rhs.shape.area
                 ):
-                    if keep_larger:
+                    if strategy == "keep_large":
                         if block_lhs.shape.area > block_rhs.shape.area:
                             to_remove.append(block_j)
                         else:
                             to_remove.append(block_i)
-                    else:
+                    elif strategy == "keep_small":
                         if block_lhs.shape.area < block_rhs.shape.area:
                             to_remove.append(block_j)
                         else:
                             to_remove.append(block_i)
+                    elif strategy == "merge":
+                        to_remove.append(block_i)
+                        if block_lhs.kind.value > block_rhs.kind.value:
+                            merge_kind = block_lhs.kind
+                        else:
+                            merge_kind = block_rhs.kind
+                        self._blocks[block_j]._kind = merge_kind
+                        union_shape = block_lhs.shape.union(block_rhs.shape)
+                        self._blocks[block_j].set_shape(union_shape)
+                    else:
+                        raise Exception("Unsupported overlapping strategy.")
+
         to_remove = sorted(list(set(to_remove)))
         for block_i in reversed(to_remove):
             self._blocks.pop(block_i)

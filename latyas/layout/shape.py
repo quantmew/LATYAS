@@ -58,10 +58,10 @@ class Shape:
     def is_point_inside(self, point: Point):
         pass
 
-    def union(self, other: "Shape"):
+    def union(self, other: "Shape") -> "Shape":
         pass
 
-    def intersect(self, other: "Shape"):
+    def intersect(self, other: "Shape") -> "Shape":
         pass
 
 class Rectangle(Shape):
@@ -115,7 +115,7 @@ class Rectangle(Shape):
             and point.y < self.y_2
         )
 
-    def union(self, other: "Shape"):
+    def union(self, other: "Shape") -> Shape:
         if isinstance(other, Rectangle):
             return self.__class__(
                 min(self.x_1, other.x_1),
@@ -126,7 +126,7 @@ class Rectangle(Shape):
         else:
             raise Exception("Unsupported union shape")
 
-    def intersect(self, other: "Shape"):
+    def intersect(self, other: "Shape") -> Shape:
         if isinstance(other, Rectangle):
             return self.__class__(
                 max(self.x_1, other.x_1),

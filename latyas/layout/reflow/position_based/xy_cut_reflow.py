@@ -20,7 +20,7 @@ def simple_position_reflow(page_layout: Layout, bboxs: List[int]) -> List[int]:
         max_x = max(max_x, x2)
         min_y = min(min_y, y)
         max_y = max(max_y, y2)
-    
+
     w = max_x - min_x
     h = max_y - min_y
     sf = (h // 16, w // 3)
@@ -57,20 +57,24 @@ def horizontal_overlap(
 
 
 def horizontal_region(
-    page_layout: Layout, bboxs: List[int], depth: int = 0
+    page_layout: Layout,
+    bboxs: List[int],
+    margin: float = 0.0,
+    depth: int = 0,
+    max_depth: int = 4,
 ) -> List[int]:
     """
     水平排布的block
     """
     if len(bboxs) <= 1:
         return bboxs
-    if depth > 4:
+    if depth > max_depth:
         return simple_position_reflow(page_layout, bboxs)
 
     possible_x_list = []
     for bbox_i in bboxs:
         bbox = page_layout[bbox_i].shape.boundingbox
-        possible_x_list.extend([bbox[0] - EPSILON, bbox[2] + EPSILON])
+        possible_x_list.extend([bbox[0] - margin, bbox[2] + margin])
     possible_x_list = sorted(possible_x_list)
 
     sorted_bboxs = []
@@ -80,11 +84,27 @@ def horizontal_region(
         if len(o) == 0:
             if len(l) == 0:
                 continue
-            
+
             # print(f"possible x: {possible_x}")
-            sorted_bboxs.extend(vertical_region(page_layout, l, depth + 1))
+            sorted_bboxs.extend(
+                vertical_region(
+                    page_layout,
+                    l,
+                    margin=margin - depth * (margin / max_depth),
+                    depth=depth + 1,
+                    max_depth=max_depth,
+                )
+            )
             rest_bboxs = r
-    sorted_bboxs.extend(vertical_region(page_layout, rest_bboxs, depth + 1))
+    sorted_bboxs.extend(
+        vertical_region(
+            page_layout,
+            rest_bboxs,
+            margin=margin - depth * (margin / max_depth),
+            depth=depth + 1,
+            max_depth=max_depth,
+        )
+    )
     return sorted_bboxs
 
 
@@ -110,19 +130,25 @@ def vertical_overlap(
     return top_box, bottom_box, overlap_box
 
 
-def vertical_region(page_layout: Layout, bboxs: List[int], depth: int = 0) -> List[int]:
+def vertical_region(
+    page_layout: Layout,
+    bboxs: List[int],
+    margin: float = 0.0,
+    depth: int = 0,
+    max_depth: int = 4,
+) -> List[int]:
     """
     垂直排布的block
     """
     if len(bboxs) <= 1:
         return bboxs
-    if depth > 4:
+    if depth > max_depth:
         return simple_position_reflow(page_layout, bboxs)
 
     possible_y_list = []
     for bbox_i in bboxs:
         bbox = page_layout[bbox_i].shape.boundingbox
-        possible_y_list.extend([bbox[1] - EPSILON, bbox[3] + EPSILON])
+        possible_y_list.extend([bbox[1] - margin, bbox[3] + margin])
     possible_y_list = sorted(possible_y_list)
 
     sorted_bboxs = []
@@ -134,18 +160,35 @@ def vertical_region(page_layout: Layout, bboxs: List[int], depth: int = 0) -> Li
                 continue
 
             # print(f"possible y: {possible_y}")
-            sorted_bboxs.extend(horizontal_region(page_layout, t, depth + 1))
+            sorted_bboxs.extend(
+                horizontal_region(
+                    page_layout,
+                    t,
+                    margin=margin - depth * (margin / max_depth),
+                    depth=depth + 1,
+                    max_depth=max_depth,
+                )
+            )
             rest_bboxs = b
-    sorted_bboxs.extend(horizontal_region(page_layout, rest_bboxs, depth + 1))
+
+    sorted_bboxs.extend(
+        horizontal_region(
+            page_layout,
+            rest_bboxs,
+            margin=margin - depth * (margin / max_depth),
+            depth=depth + 1,
+            max_depth=max_depth,
+        )
+    )
     return sorted_bboxs
 
 
-def xy_cut_reflow(page_layout: Layout) -> List[int]:
+def xy_cut_reflow(page_layout: Layout, margin: float = 10) -> List[int]:
     page_img = page_layout._page
     page_shape = page_img.shape  # (h, w, c)
     bboxs = []
     for bbox_i in range(len(page_layout)):
         bboxs.append(bbox_i)
 
-    out = horizontal_region(page_layout, bboxs, 0)
+    out = horizontal_region(page_layout, bboxs, margin=margin, depth=0, max_depth=8)
     return out

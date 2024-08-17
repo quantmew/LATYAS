@@ -3,7 +3,7 @@
 from typing import Optional, Union
 from latyas.layout.shape import Shape
 
-
+import copy
 from enum import Enum
 
 class BlockType(Enum):
@@ -88,6 +88,24 @@ BLOCK_TYPE_COLOR_MAP = {
     BlockType.Unknown: (192, 192, 192), # 浅灰色
 }
 
+def is_text_block(block_type: BlockType) -> bool:
+    return block_type in [
+        BlockType.Text,
+        BlockType.Caption,
+        BlockType.FigureCaption,
+        BlockType.TableCaption,
+        BlockType.Title,
+        BlockType.Reference,
+    ]
+
+def is_image_block(block_type: BlockType) -> bool:
+    return block_type in [
+        BlockType.Figure,
+        BlockType.Icon,
+        BlockType.QRCode,
+        BlockType.BarCode,
+    ]
+
 class Block(object):
     def __init__(self, shape: Shape, kind: BlockType=BlockType.Unknown) -> None:
         self._shape = shape
@@ -108,3 +126,14 @@ class Block(object):
 
     def set_text(self, text: str):
         self._text = text
+    
+    def set_shape(self, shape: Shape):
+        self._shape = shape
+    
+    def copy(self) -> "Shape":
+        copy_block = Block(
+            shape = copy.deepcopy(self._shape),
+            kind=self._kind,
+        )
+        copy_block._text = self._text
+        return copy_block
