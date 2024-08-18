@@ -30,8 +30,13 @@ class PaddleOCRModel(OCRModel):
         self.config = config
         self._name_or_path = config._name_or_path
         self._lang = config.lang
+        self._det_algorithm = config.det_algorithm
 
-        self.model = PaddleOCR(use_angle_cls=True, lang=self._lang)
+        self.model = PaddleOCR(
+            use_angle_cls=True,
+            lang=self._lang,
+            det_algorithm=self._det_algorithm,
+        )
 
     @classmethod
     def from_pretrained(

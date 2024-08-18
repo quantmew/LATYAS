@@ -187,7 +187,7 @@ def vertical_region(
 
 
 def xy_cut_reflow(
-    page_layout: Union[Layout, List[Block]], margin: float = 10
+    page_layout: Union[Layout, List[Block]], margin: float = 10, horizontal_first: bool=True
 ) -> List[int]:
     # page_img = page_layout._page
     # page_shape = page_img.shape  # (h, w, c)
@@ -195,5 +195,8 @@ def xy_cut_reflow(
     for bbox_i in range(len(page_layout)):
         bboxs.append(bbox_i)
 
-    out = horizontal_region(page_layout, bboxs, margin=margin, depth=0, max_depth=8)
+    if horizontal_first:
+        out = horizontal_region(page_layout, bboxs, margin=margin, depth=0, max_depth=8)
+    else:
+        out = vertical_region(page_layout, bboxs, margin=margin, depth=0, max_depth=8)
     return out

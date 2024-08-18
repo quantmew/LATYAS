@@ -5,6 +5,7 @@ import numpy as np
 import os
 import tqdm
 
+from latyas.layout.block import BlockType
 from latyas.pipelines.book_pipeline import BookPipeline
 from latyas.pipelines.paper_pipeline import PaperPipeline
 from latyas.pipelines.report_pipeline import ReportPipeline
@@ -25,11 +26,14 @@ def pdf2text(pdf_path: str, mode: str):
     try:
         for page_number, page in enumerate(pdf_reader):
             page_layout = pipeline.analyze_pdf(page)
-            text = [
-                page_layout._blocks[i]._text
-                for i in range(len(page_layout))
-                if page_layout._blocks[i]._text is not None
-            ]
+            text = []
+            for i in range(len(page_layout)):
+                block = page_layout[i]
+                if block._text is None:
+                    continue
+                if block.kind == BlockType.EmbedEq:
+                    continue
+                text.append(block._text)
             texts.append(text)
             page.close()
             break
@@ -40,9 +44,9 @@ def pdf2text(pdf_path: str, mode: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process a PDF file.")
-    parser.add_argument("--pdf", type=str, help="Path to the PDF file")
-    parser.add_argument("--out", type=str, help="Path to the text file")
-    parser.add_argument("--mode", type=str, help="Parse mode")
+    parser.add_argument("--pdf", type=str, help="Path to the PDF file", default="report6.pdf")
+    parser.add_argument("--out", type=str, help="Path to the text file", default="out.txt")
+    parser.add_argument("--mode", type=str, help="Parse mode", default="paper")
 
     args = parser.parse_args()
 

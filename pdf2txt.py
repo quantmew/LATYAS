@@ -16,10 +16,9 @@ model = UltralyticsLayoutModel.from_pretrained("XiaHan19/360LayoutAnalysis-gener
 
 from latyas.ocr.models.paddleocr.paddleocr_ocr_config import PaddleOCRConfig
 from latyas.ocr.models.paddleocr.paddleocr_ocr_model import PaddleOCRModel
-from latyas.layout.shape import Rectangle
-
 ocr_model = PaddleOCRModel(PaddleOCRConfig())
 
+from latyas.layout.shape import Rectangle
 import pypdfium2
 import cv2
 import numpy as np
@@ -70,7 +69,7 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
             continue
         x1, y1, x2, y2 = block.shape.boundingbox
         x_1, y_1, x_2, y_2 = x1 / rs, height - y2 / rs, x2 / rs, height - y1 / rs
-        ocr_text = ocr_model.detect(page_layout.crop_image(block))
+        ocr_text = ocr_model.recognize(page_layout.crop_image(block))
         pdf_text = get_text_by_bbox(textpage, x_1, y_1, x_2, y_2)
         print("=========== OCR Text =============")
         print(ocr_text)
@@ -101,7 +100,7 @@ def get_page_text(page_number: int, page: pypdfium2.PdfPage) -> List[str]:
     return [page_layout._blocks[i]._text for i in range(len(page_layout)) if page_layout._blocks[i]._text is not None]
 
 def main():
-    file_path = "report4.pdf"
+    file_path = "report3.pdf"
     pdf_reader = pypdfium2.PdfDocument(file_path, autoclose=True)
     try:
         texts = []

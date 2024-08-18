@@ -21,5 +21,6 @@ from latyas.ocr.models.ocr_config import OCRConfig
 class PaddleOCRConfig(OCRConfig):
     model_type: str = "PaddleOCRModel"
     lang: str = "ch"
+    det_algorithm: str = "DB"
 
 

@@ -19,7 +19,14 @@ from PIL import Image
 from typing import List, Optional, Union
 
 import torch
+from onnxruntime import InferenceSession
 
+from latyas.layout.block import BlockType
+from latyas.layout.models.texteller.det_model.inference import PredictConfig
+from latyas.layout.models.texteller.det_model.inference import predict as latex_det_predict
+
+from latyas.layout.models.texteller.texteller_layout_model import TexTellerLayoutModel
+from latyas.layout.shape import Rectangle
 from latyas.ocr.models.ocr_model import OCRModel
 from latyas.ocr.ocr_utils import small_image_padding
 from latyas.ocr.text_bbox import TextBoundingBox
@@ -29,11 +36,15 @@ from .ocr_model.model.TexTeller import TexTeller
 from .ocr_model.utils.inference import inference as latex_inference
 from .ocr_model.utils.to_katex import to_katex
 
+
 class TexTellerOCRModel(OCRModel):
     def __init__(self, config: TexTellerOCRConfig) -> None:
         self.config = config
         self._name_or_path = config._name_or_path
-        
+
+        self.latex_detect_model = TexTellerLayoutModel.from_pretrained(
+            "XiaHan19/texteller_rtdetr_r50vd_6x_coco"
+        )
         self.latex_rec_model = TexTeller.from_pretrained()
         self.tokenizer = TexTeller.get_tokenizer()
 
@@ -49,9 +60,33 @@ class TexTellerOCRModel(OCRModel):
         config._revision = revision
         return cls(config)
 
-    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> List[TextBoundingBox]:
-        raise  NotImplementedError("TexTellerOCRModel do not support detection.")
+    def detect(
+        self, image: Union["np.ndarray", "Image.Image"]
+    ) -> List[TextBoundingBox]:
         
+        if isinstance(image, Image.Image):
+            image_array = np.array(image)
+        elif isinstance(image, np.ndarray):
+            image_array = image
+
+        infer_config = PredictConfig(self.latex_detect_model.config.cfg_path)
+        latex_det_model = InferenceSession(self.latex_detect_model.config.weights_path)
+        latex_bboxes = latex_det_predict(image_array, latex_det_model, infer_config)
+        
+        bboxs = []
+        for bbox in latex_bboxes:
+            x, y = bbox.p.x, bbox.p.y
+            x2, y2 = x + bbox.w, y + bbox.h
+            if bbox.label == "isolated":
+                block_type = BlockType.Equation
+            else:
+                block_type = BlockType.EmbedEq
+            bboxs.append(
+                TextBoundingBox(Rectangle(x, y, x2, y2), bbox.content, bbox.confidence),
+            )
+
+        return bboxs
+
     def recognize(self, image: Union["np.ndarray", "Image.Image"], num_beam=5) -> str:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
@@ -65,6 +100,12 @@ class TexTellerOCRModel(OCRModel):
             accelerator = "cuda"
         else:
             accelerator = "cpu"
-        res = latex_inference(self.latex_rec_model, self.tokenizer, [image_array], accelerator=accelerator, num_beams=num_beam)
+        res = latex_inference(
+            self.latex_rec_model,
+            self.tokenizer,
+            [image_array],
+            accelerator=accelerator,
+            num_beams=num_beam,
+        )
         res = to_katex(res[0])
         return res

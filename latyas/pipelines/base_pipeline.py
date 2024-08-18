@@ -11,6 +11,8 @@ from latyas.ocr.models.ocr_model import OCRModel
 from latyas.ocr.text_bbox import TextBoundingBox
 from latyas.utils.text_utils import levenshtein_distance
 
+def coord_latyas_to_pdf(x, y, widht, height):
+    return x, height - y
 
 def get_text_by_bbox(
     textpage: pypdfium2.PdfPage, x_1: float, y_1: float, x_2: float, y_2: float
@@ -55,7 +57,7 @@ class BasePipeline(object):
     def add_ocr_rule(self, block_type: BlockType, rule: str) -> None:
         self._ocr_rule[block_type] = rule
 
-    def analyze_pdf(self, page: pypdfium2.PdfPage, threshold:float=0.0) -> Layout:
+    def analyze_pdf(self, page: pypdfium2.PdfPage) -> Layout:
         width, height = page.get_size()
         render_scale = rs = 2
         bitmap = page.render(
@@ -89,8 +91,8 @@ class BasePipeline(object):
 
         # Text with Embed Equation
         for bbox_text_index in range(len(page_layout)):
-            block = page_layout[bbox_text_index]
-            if not is_text_block(block.kind):
+            text_block = page_layout[bbox_text_index]
+            if not is_text_block(text_block.kind):
                 continue
             # Check EmbedEq
             has_embed_eq = False
@@ -103,35 +105,38 @@ class BasePipeline(object):
                 ].shape.is_inside(page_layout[bbox_text_index].shape):
                     has_embed_eq = True
                     equations.append(bbox_j)
+            
+            if not has_embed_eq:
+                continue
 
             masked_layout = page_layout.copy()
             snippet_bboxs: List[TextBoundingBox] = []
             # Get bbox from embedding equations
             for bbox_j in equations:
+                eq_block = page_layout[bbox_j]
                 if block.kind != BlockType.EmbedEq:
                     continue
-                block = page_layout[bbox_j]
                 if BlockType.EmbedEq in self._ocr_rule:
                     model_name = self._ocr_rule[BlockType.EmbedEq]
-                    text = self._ocr_models[model_name].recognize(page_layout.crop_image(block))
+                    text = self._ocr_models[model_name].recognize(page_layout.crop_image(eq_block))
                     page_layout[bbox_j].set_text(text)
-                    bbox = TextBoundingBox(block.shape, "$" + text + "$", 1.0)
+                    bbox = TextBoundingBox(eq_block.shape, "$" + text + "$", 1.0)
                     snippet_bboxs.append(bbox)
-                    masked_layout.mask_image(block)
+                    masked_layout.mask_image(eq_block)
                 else:
-                    raise Exception(f"Cannot find the OCR model for {block.kind.name}")
+                    raise Exception(f"Cannot find the OCR model for {eq_block.kind.name}")
             
             # Get bbox from text
             masked_layout.keep_image(page_layout[bbox_text_index])
-            if block.kind in self._ocr_rule:
-                model_name = self._ocr_rule[block.kind]
+            if text_block.kind in self._ocr_rule:
+                model_name = self._ocr_rule[text_block.kind]
                 bboxs = self._ocr_models[model_name].detect(masked_layout._page)
                 snippet_bboxs.extend(bboxs)
             else:
-                raise Exception(f"Cannot find the OCR model for {block.kind.name}")
-            
+                raise Exception(f"Cannot find the OCR model for {text_block.kind.name}")
+
             # Reflow bboxs
-            reflow_indices = xy_cut_reflow(snippet_bboxs, margin=1)
+            reflow_indices = xy_cut_reflow(snippet_bboxs, margin=1, horizontal_first=False)
             text_list = []
             for idx in reflow_indices:
                 text_list.append(snippet_bboxs[idx].text)
@@ -156,33 +161,18 @@ class BasePipeline(object):
             if has_embed_eq:
                 continue
             x1, y1, x2, y2 = block.shape.boundingbox
-            x_1, y_1, x_2, y_2 = x1 / rs, height - y2 / rs, x2 / rs, height - y1 / rs
             if block.kind in self._ocr_rule:
                 model_name = self._ocr_rule[block.kind]
                 ocr_text = self._ocr_models[model_name].recognize(page_layout.crop_image(block))
             else:
                 raise Exception(f"Cannot find the OCR model for {block.kind.name}")
-            pdf_text = get_text_by_bbox(textpage, x_1, y_1, x_2, y_2)
-
-            dis = levenshtein_distance(ocr_text, pdf_text)
-            dis_percent = dis / max(len(ocr_text), len(pdf_text))
-
-            if dis_percent < threshold:
-                text = pdf_text
-            else:
-                text = ocr_text
+            text = ocr_text
             block.set_text(text)
         textpage.close()
 
         # Reflow
         sorted_block_indices = xy_cut_reflow(page_layout)
         page_layout._blocks = [page_layout._blocks[i] for i in sorted_block_indices]
-        
-        debug=True
-        if debug:
-            vis = page_layout.visualize()
-            vis = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
-            cv2.imwrite(f"./outputs/output_0.jpg", vis)
 
         return page_layout
 

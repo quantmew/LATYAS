@@ -58,7 +58,7 @@ class Shape:
     def is_point_inside(self, point: Point):
         pass
     
-    def is_inside(self, other: "Shape") -> bool:
+    def is_inside(self, other: "Shape", margin: float=20) -> bool:
         pass
 
     def union(self, other: "Shape") -> "Shape":
@@ -118,12 +118,12 @@ class Rectangle(Shape):
             and point.y < self.y_2
         )
 
-    def is_inside(self, other: "Rectangle") -> bool:
+    def is_inside(self, other: "Rectangle", margin: float=20) -> bool:
         return (
-            self.x_1 >= other.x_1
-            and self.y_1 >= other.y_1
-            and self.x_2 <= other.x_2
-            and self.y_2 <= other.y_2
+            self.x_1 >= other.x_1 - margin
+            and self.y_1 >= other.y_1 - margin
+            and self.x_2 <= other.x_2 + margin
+            and self.y_2 <= other.y_2 + margin
         )
 
     def union(self, other: "Shape") -> Shape:

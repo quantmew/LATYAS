@@ -60,7 +60,7 @@ class TexTellerLayoutModel(LayoutModel):
         config._revision = revision
         return cls(config)
 
-    def detect(self, image: Union["np.ndarray", "Image.Image"], threshold: float=0.3) -> Layout:
+    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> Layout:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
         elif isinstance(image, np.ndarray):
