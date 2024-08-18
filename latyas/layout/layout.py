@@ -143,6 +143,15 @@ class Layout(object):
         x1, y1, x2, y2 = block.shape.boundingbox
         x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
         self._page[y1:y2, x1:x2, :] = color # TODO: support hex color
+    
+    def keep_image(self, block: Block, color: int = 255):
+        if self._page is None:
+            return None
+        x1, y1, x2, y2 = block.shape.boundingbox
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        blank_page = np.full_like(self._page, fill_value=color)
+        blank_page[y1:y2, x1:x2, :] = self._page[y1:y2, x1:x2, :]
+        self._page = blank_page
 
     def visualize(self, thickness=2) -> np.ndarray:
         vis = self._page.copy()

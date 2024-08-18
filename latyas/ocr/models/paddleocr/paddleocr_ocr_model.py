@@ -16,8 +16,10 @@ import os
 import cv2
 import numpy as np
 from PIL import Image
-from typing import Optional, Union
+from typing import List, Optional, Union
 
+from latyas.layout.shape import Rectangle
+from latyas.ocr.text_bbox import TextBoundingBox
 from paddleocr import PaddleOCR
 
 from latyas.ocr.models.ocr_model import OCRModel
@@ -43,7 +45,7 @@ class PaddleOCRModel(OCRModel):
         config._revision = revision
         return cls(config)
 
-    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> str:
+    def recognize(self, image: Union["np.ndarray", "Image.Image"]) -> str:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
         elif isinstance(image, np.ndarray):
@@ -64,3 +66,34 @@ class PaddleOCRModel(OCRModel):
                 result_text.append(text.replace("\n", ""))
 
         return "".join(result_text)
+
+    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> List[TextBoundingBox]:
+        if isinstance(image, Image.Image):
+            image_array = np.array(image)
+        elif isinstance(image, np.ndarray):
+            image_array = image
+        else:
+            image_array = image
+
+        result = self.model.ocr(image_array, cls=True)
+        result_bboxs = []
+        for idx in range(len(result)):
+            res = result[idx]
+            if res is None:
+                continue
+            for line in res:
+                bbox_points, (text, conf) = line
+                point0, point1, point2, point3 = bbox_points
+                bbox = TextBoundingBox()
+                bbox.rect = Rectangle(
+                    x_1=min(point0[0], point1[0], point2[0], point3[0]),
+                    y_1=min(point0[1], point1[1], point2[1], point3[1]),
+                    x_2=max(point0[0], point1[0], point2[0], point3[0]),
+                    y_2=max(point0[1], point1[1], point2[1], point3[1]),
+                )
+                bbox.text = text
+                bbox.confidence = conf
+                
+                result_bboxs.append(bbox)
+
+        return result_bboxs

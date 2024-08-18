@@ -57,6 +57,9 @@ class Shape:
 
     def is_point_inside(self, point: Point):
         pass
+    
+    def is_inside(self, other: "Shape") -> bool:
+        pass
 
     def union(self, other: "Shape") -> "Shape":
         pass
@@ -115,6 +118,14 @@ class Rectangle(Shape):
             and point.y < self.y_2
         )
 
+    def is_inside(self, other: "Rectangle") -> bool:
+        return (
+            self.x_1 >= other.x_1
+            and self.y_1 >= other.y_1
+            and self.x_2 <= other.x_2
+            and self.y_2 <= other.y_2
+        )
+
     def union(self, other: "Shape") -> Shape:
         if isinstance(other, Rectangle):
             return self.__class__(
@@ -136,6 +147,12 @@ class Rectangle(Shape):
             )
         else:
             raise Exception("Unsupported intersect shape")
+
+    def __str__(self):
+        return f"Rectangle([{self.x_1}, {self.y_1}], [{self.x_2}, {self.y_2}])"
+
+    def __repr__(self):
+        return f"Rectangle([{self.x_1}, {self.y_1}], [{self.x_2}, {self.y_2}])"
 
 class Quadrilateral(Shape):
     def __init__(self, points: List[Point]):

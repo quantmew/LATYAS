@@ -16,12 +16,13 @@ import os
 import cv2
 import numpy as np
 from PIL import Image
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import torch
 
 from latyas.ocr.models.ocr_model import OCRModel
 from latyas.ocr.ocr_utils import small_image_padding
+from latyas.ocr.text_bbox import TextBoundingBox
 from .texteller_ocr_config import TexTellerOCRConfig
 
 from .ocr_model.model.TexTeller import TexTeller
@@ -48,7 +49,10 @@ class TexTellerOCRModel(OCRModel):
         config._revision = revision
         return cls(config)
 
-    def detect(self, image: Union["np.ndarray", "Image.Image"], num_beam=5) -> str:
+    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> List[TextBoundingBox]:
+        raise  NotImplementedError("TexTellerOCRModel do not support detection.")
+        
+    def recognize(self, image: Union["np.ndarray", "Image.Image"], num_beam=5) -> str:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
         elif isinstance(image, np.ndarray):

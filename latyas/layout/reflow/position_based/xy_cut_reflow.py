@@ -4,13 +4,16 @@ See also: https://stackoverflow.com/questions/27549574/algorithms-to-extract-tex
 """
 
 import sys
-from typing import List, Tuple
+from typing import List, Tuple, Union
+from latyas.layout.block import Block
 from latyas.layout.layout import Layout
 
 EPSILON = 5
 
 
-def simple_position_reflow(page_layout: Layout, bboxs: List[int]) -> List[int]:
+def simple_position_reflow(
+    page_layout: Union[Layout, List[Block]], bboxs: List[int]
+) -> List[int]:
     # Sort Blocks
     sorted_bbox = []
     min_x, min_y, max_x, max_y = page_layout[0].shape.boundingbox
@@ -35,7 +38,7 @@ def simple_position_reflow(page_layout: Layout, bboxs: List[int]) -> List[int]:
 
 
 def horizontal_overlap(
-    page_layout: Layout, bboxs: List[int], split: float
+    page_layout: Union[Layout, List[Block]], bboxs: List[int], split: float
 ) -> Tuple[List[int], List[int], List[int]]:
     left_box = []
     right_box = []
@@ -57,7 +60,7 @@ def horizontal_overlap(
 
 
 def horizontal_region(
-    page_layout: Layout,
+    page_layout: Union[Layout, List[Block]],
     bboxs: List[int],
     margin: float = 0.0,
     depth: int = 0,
@@ -109,7 +112,7 @@ def horizontal_region(
 
 
 def vertical_overlap(
-    page_layout: Layout, bboxs: List[int], split: float
+    page_layout: Union[Layout, List[Block]], bboxs: List[int], split: float
 ) -> Tuple[List[int], List[int], List[int]]:
     top_box = []
     bottom_box = []
@@ -131,7 +134,7 @@ def vertical_overlap(
 
 
 def vertical_region(
-    page_layout: Layout,
+    page_layout: Union[Layout, List[Block]],
     bboxs: List[int],
     margin: float = 0.0,
     depth: int = 0,
@@ -183,9 +186,11 @@ def vertical_region(
     return sorted_bboxs
 
 
-def xy_cut_reflow(page_layout: Layout, margin: float = 10) -> List[int]:
-    page_img = page_layout._page
-    page_shape = page_img.shape  # (h, w, c)
+def xy_cut_reflow(
+    page_layout: Union[Layout, List[Block]], margin: float = 10
+) -> List[int]:
+    # page_img = page_layout._page
+    # page_shape = page_img.shape  # (h, w, c)
     bboxs = []
     for bbox_i in range(len(page_layout)):
         bboxs.append(bbox_i)

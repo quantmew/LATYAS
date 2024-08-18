@@ -26,8 +26,7 @@ import numpy as np
 import math
 import time
 
-import utility
-from utility import get_logger
+from .utility import create_predictor, get_logger
 
 from CTCLabelDecode import CTCLabelDecode
 
@@ -45,7 +44,7 @@ class TextRecognizer(object):
             self.input_tensor,
             self.output_tensors,
             self.config,
-        ) = utility.create_predictor(args, "rec", logger)
+        ) = create_predictor(args, "rec", logger)
         self.benchmark = args.benchmark
         self.use_onnx = args.use_onnx
         self.return_word_box = args.return_word_box

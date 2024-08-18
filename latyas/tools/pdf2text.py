@@ -26,13 +26,13 @@ def pdf2text(pdf_path: str, mode: str):
         for page_number, page in enumerate(pdf_reader):
             page_layout = pipeline.analyze_pdf(page)
             text = [
-                page_layout._blocks[i]._text.replace("", " ")
+                page_layout._blocks[i]._text
                 for i in range(len(page_layout))
                 if page_layout._blocks[i]._text is not None
             ]
             texts.append(text)
             page.close()
-
+            break
     finally:
         pdf_reader.close()
     return texts
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     pdf_path = args.pdf
     print(f"PDF file path: {pdf_path}")
 
-    texts = pdf2text(pdf_path)
+    texts = pdf2text(pdf_path, mode=args.mode)
     with open(args.out, "w", encoding="utf-8") as f:
         for text in texts:
             f.write("\n==========\n".join(text))

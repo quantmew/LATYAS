@@ -26,8 +26,7 @@ import time
 import sys
 
 # import tools.infer.utility as utility
-import utility
-from utility import get_logger
+from .utility import create_predictor, get_logger
 
 from DBPostProcess import DBPostProcess
 from operators import DetResizeForTest, KeepKeys, NormalizeImage, ToCHWImage
@@ -74,7 +73,7 @@ class TextDetector(object):
             self.input_tensor,
             self.output_tensors,
             self.config,
-        ) = utility.create_predictor(args, "det", logger)
+        ) = create_predictor(args, "det", logger)
 
         assert self.use_onnx
         if self.use_onnx:

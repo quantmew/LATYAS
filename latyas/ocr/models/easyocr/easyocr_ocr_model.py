@@ -16,12 +16,14 @@ import os
 import cv2
 import numpy as np
 from PIL import Image
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import easyocr
 
+from latyas.layout.shape import Rectangle
 from latyas.ocr.models.ocr_model import OCRModel
 from latyas.ocr.ocr_utils import small_image_padding
+from latyas.ocr.text_bbox import TextBoundingBox
 from .easyocr_ocr_config import EasyOCROCRConfig
 
 
@@ -45,7 +47,7 @@ class EasyOCROCRModel(OCRModel):
         config._revision = revision
         return cls(config)
 
-    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> str:
+    def recognize(self, image: Union["np.ndarray", "Image.Image"]) -> str:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
         elif isinstance(image, np.ndarray):
@@ -55,7 +57,37 @@ class EasyOCROCRModel(OCRModel):
         # 如果图像的宽度或高度小于400，则放置在800x800的白色背景上
         if image_array.shape[0] < 400 or image_array.shape[1] < 400:
             image_array = small_image_padding(image_array)
-        result = self.model.readtext(
+        results = self.model.readtext(
             image_array, decoder="beamsearch", beamWidth=5, paragraph=True, detail=0
         )
-        return "\n".join(result)
+
+        return "\n".join(results)
+
+    def detect(
+        self, image: Union["np.ndarray", "Image.Image"]
+    ) -> List[TextBoundingBox]:
+        if isinstance(image, Image.Image):
+            image_array = np.array(image)
+        elif isinstance(image, np.ndarray):
+            image_array = image
+        else:
+            image_array = image
+        results = self.model.readtext(
+            image_array, decoder="beamsearch", beamWidth=5, paragraph=False, detail=1
+        )
+        ret = []
+        for result in results:
+            point0, point1, point2, point3 = result[0]
+            text = result[1]
+            confidence = result[2]
+            bbox = TextBoundingBox()
+            bbox.rect = Rectangle(
+                x_1=min(point0[0], point1[0], point2[0], point3[0]),
+                y_1=min(point0[1], point1[1], point2[1], point3[1]),
+                x_2=max(point0[0], point1[0], point2[0], point3[0]),
+                y_2=max(point0[1], point1[1], point2[1], point3[1]),
+            )
+            bbox.text = text
+            bbox.confidence = confidence
+            ret.append(bbox)
+        return ret

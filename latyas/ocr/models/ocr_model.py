@@ -15,9 +15,10 @@
 import numpy as np
 from PIL import Image
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import List, Union
 
 from latyas.models.latyas_model import LatyasModel
+from latyas.ocr.text_bbox import TextBoundingBox
 
 
 class OCRModel(LatyasModel):
@@ -25,5 +26,9 @@ class OCRModel(LatyasModel):
         pass
 
     @abstractmethod
-    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> str:
+    def recognize(self, image: Union["np.ndarray", "Image.Image"]) -> str:
+        pass
+    
+    @abstractmethod
+    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> List[TextBoundingBox]:
         pass
