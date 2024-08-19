@@ -25,8 +25,6 @@ def pdf2text(pdf_path: str, mode: str):
     texts = []
     try:
         for page_number, page in tqdm.tqdm(enumerate(pdf_reader), total=len(pdf_reader)):
-            if page_number != 1:
-                continue
             page_layout = pipeline.analyze_pdf(page)
             text = []
             for i in range(len(page_layout)):
