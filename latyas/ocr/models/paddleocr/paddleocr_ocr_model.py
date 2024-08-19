@@ -25,6 +25,13 @@ from paddleocr import PaddleOCR
 from latyas.ocr.models.ocr_model import OCRModel
 from latyas.ocr.ocr_utils import small_image_padding
 from .paddleocr_ocr_config import PaddleOCRConfig
+
+from ppocr.utils.logging import get_logger
+import logging
+logger = get_logger()
+logger.setLevel(logging.ERROR)
+
+
 class PaddleOCRModel(OCRModel):
     def __init__(self, config: PaddleOCRConfig) -> None:
         self.config = config

@@ -24,7 +24,7 @@ def pdf2text(pdf_path: str, mode: str):
     pdf_reader = pypdfium2.PdfDocument(pdf_path, autoclose=True)
     texts = []
     try:
-        for page_number, page in enumerate(pdf_reader):
+        for page_number, page in tqdm.tqdm(enumerate(pdf_reader)):
             page_layout = pipeline.analyze_pdf(page)
             text = []
             for i in range(len(page_layout)):
@@ -33,7 +33,10 @@ def pdf2text(pdf_path: str, mode: str):
                     continue
                 if block.kind == BlockType.EmbedEq:
                     continue
-                text.append(block._text)
+                elif block.kind == BlockType.Equation:
+                    text.append("\n$$\n" + block._text + "\n$$\n")
+                else:
+                    text.append(block._text)
             texts.append(text)
             page.close()
             # break
