@@ -35,6 +35,7 @@ from latyas.ocr.models.texocr_model import EmbeddingTexOCRModel, MixTexOCRModel,
 from latyas.ocr.ocr_utils import small_image_padding
 from latyas.ocr.text_bbox import TextBoundingBox
 
+# counter = 0
 
 class TexMixMixTexOCRModel(MixTexOCRModel):
     def __init__(self, tex_model: EmbeddingTexOCRModel, text_model: OCRModel, config: TexMixMixTexOCRConfig) -> None:
@@ -58,7 +59,7 @@ class TexMixMixTexOCRModel(MixTexOCRModel):
     def detect(
         self, image: Union["np.ndarray", "Image.Image"]
     ) -> List[TextBoundingBox]:
-        
+
         if isinstance(image, Image.Image):
             image_array = np.array(image)
         elif isinstance(image, np.ndarray):
@@ -73,9 +74,9 @@ class TexMixMixTexOCRModel(MixTexOCRModel):
             image_array = image
         else:
             image_array = image
-        
+
         if image_array.shape[0] < 400 or image_array.shape[1] < 400:
-            image_array = small_image_padding(image_array)
+            image_array = small_image_padding(image_array, blur=0)
 
         snippet_bboxs: List[TextBoundingBox] = []
         equation_bboxs = self.tex_model.detect(image_array)
@@ -83,16 +84,25 @@ class TexMixMixTexOCRModel(MixTexOCRModel):
         local_layout = Layout()
         local_layout._page = image_array
         masked_layout = local_layout.copy()
-        
+
         # Get bbox from embedding equations
         for eq_bbox in equation_bboxs:
             text = self.tex_model.recognize(local_layout.crop_image(eq_bbox))
-            bbox = TextBoundingBox(eq_bbox.shape, "$" + text + "$", 1.0)
+            bbox = TextBoundingBox(eq_bbox.shape, "$" + text + "$", eq_bbox.confidence)
             snippet_bboxs.append(bbox)
             masked_layout.mask_image(eq_bbox)
 
+        # Sort bboxs
+        sorted_bbox = [(e.shape.boundingbox[0], e) for e in equation_bboxs]
+        sorted_bbox = sorted(sorted_bbox, key=lambda x: x[0])
+        equation_bboxs = [e[1] for e in sorted_bbox]
+
         # Get bbox from text
         text_bboxs = self.text_model.detect(masked_layout._page)
+
+        # Reflow bboxs
+        reflow_indices = xy_cut_reflow(text_bboxs, margin=0, horizontal_first=False)
+        text_bboxs = [text_bboxs[idx] for idx in reflow_indices]
 
         # Split text bbox
         split_text_bboxs: List[TextBoundingBox] = []
@@ -111,16 +121,31 @@ class TexMixMixTexOCRModel(MixTexOCRModel):
                 cur_rect = rhs_text_bbox
             if cur_rect is not None:
                 split_text_bboxs.append(TextBoundingBox(rect=cur_rect, confidence=1.0))
-        
-        # Rerecognize
-        for bbox in split_text_bboxs:
-            text = self.text_model.recognize(local_layout.crop_image(bbox))
-            bbox.text = text
         snippet_bboxs.extend(split_text_bboxs)
 
+        # Rerecognize
+        for bbox in snippet_bboxs:
+            if bbox.text is not None:
+                continue
+            text = self.text_model.recognize(local_layout.crop_image(bbox))
+            bbox.text = text
+
+        # global counter
+        # vis = local_layout.draw_bboxs([box.shape for box in snippet_bboxs])
+        # vis = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
+        # cv2.imwrite(f"./outputs/output_{counter}.jpg", vis)
+        # counter += 1
+
         # Reflow bboxs
-        reflow_indices = xy_cut_reflow(snippet_bboxs, margin=1, horizontal_first=False)
+        shrinked_snippet_bboxs = [
+            TextBoundingBox(rect=e.shape.shrink(0.5)) for e in snippet_bboxs
+        ]
+        reflow_indices = xy_cut_reflow(
+            shrinked_snippet_bboxs, margin=0, horizontal_first=False
+        )
+        snippet_bboxs = [snippet_bboxs[idx] for idx in reflow_indices]
+
         text_list = []
-        for idx in reflow_indices:
-            text_list.append(snippet_bboxs[idx].text)
+        for bbox in snippet_bboxs:
+            text_list.append(bbox.text)
         return " ".join(text_list)

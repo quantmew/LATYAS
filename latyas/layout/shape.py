@@ -169,6 +169,20 @@ class Rectangle(Shape):
 
         return top_rect, bottom_rect
 
+    def shrink(self, factor: float) -> "Rectangle":
+        # Calculate new width and height
+        new_width = self.width * factor
+        new_height = self.height * factor
+
+        # Calculate new coordinates for the shrunken rectangle
+        center = self.center
+        new_x_1 = center.x - new_width / 2
+        new_x_2 = center.x + new_width / 2
+        new_y_1 = center.y - new_height / 2
+        new_y_2 = center.y + new_height / 2
+
+        return Rectangle(new_x_1, new_y_1, new_x_2, new_y_2)
+
     def __str__(self):
         return f"Rectangle([{self.x_1}, {self.y_1}], [{self.x_2}, {self.y_2}])"
 

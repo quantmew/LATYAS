@@ -28,7 +28,7 @@ def add_margin(image: np.ndarray, margin: int, color: Tuple[int, int, int] = (25
     return background
 
 
-def small_image_padding(image: np.ndarray, bg_size: int=800, bg_margin: int=160) -> np.ndarray:
+def small_image_padding(image: np.ndarray, bg_size: int=800, bg_margin: int=160, blur: int=5) -> np.ndarray:
     if isinstance(image, Image.Image):
         image_array = np.array(image)
     elif isinstance(image, np.ndarray):
@@ -37,7 +37,8 @@ def small_image_padding(image: np.ndarray, bg_size: int=800, bg_margin: int=160)
         image_array = image
 
     image_array = cv2.resize(image_array, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
-    image_array = cv2.blur(image_array, (5, 5))
+    if blur != 0:
+        image_array = cv2.blur(image_array, (blur, blur))
     image_array = add_margin(image_array, margin=bg_margin)
     height = image_array.shape[0]
     width = image_array.shape[1]
