@@ -59,4 +59,4 @@ if __name__ == "__main__":
     texts = pdf2text(pdf_path, mode=args.mode)
     with open(args.out, "w", encoding="utf-8") as f:
         for text in texts:
-            f.write("\n\n\n".join(text))
+            f.write("\n\n\n".join(text)+"\n\n\n")
