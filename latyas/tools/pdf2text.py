@@ -36,7 +36,7 @@ def pdf2text(pdf_path: str, mode: str):
                 text.append(block._text)
             texts.append(text)
             page.close()
-            break
+            # break
     finally:
         pdf_reader.close()
     return texts
@@ -44,7 +44,7 @@ def pdf2text(pdf_path: str, mode: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process a PDF file.")
-    parser.add_argument("--pdf", type=str, help="Path to the PDF file", default="report6.pdf")
+    parser.add_argument("--pdf", type=str, help="Path to the PDF file") # default="report6.pdf"
     parser.add_argument("--out", type=str, help="Path to the text file", default="out.txt")
     parser.add_argument("--mode", type=str, help="Parse mode", default="paper")
 
@@ -56,4 +56,4 @@ if __name__ == "__main__":
     texts = pdf2text(pdf_path, mode=args.mode)
     with open(args.out, "w", encoding="utf-8") as f:
         for text in texts:
-            f.write("\n==========\n".join(text))
+            f.write("\n\n\n".join(text))

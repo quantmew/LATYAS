@@ -24,6 +24,7 @@ class BlockType(Enum):
     Icon = 15
     QRCode = 16
     BarCode = 17
+    TextWithEquation = 18
 
     @classmethod
     def from_str(cls, s: str) -> "BlockType":
@@ -61,6 +62,8 @@ class BlockType(Enum):
             return BlockType.QRCode
         elif "barcode" in s.lower():
             return BlockType.BarCode
+        elif "textwithequation" in s.lower():
+            return BlockType.TextWithEquation
         else:
             return BlockType.Unknown
 
@@ -84,6 +87,7 @@ BLOCK_TYPE_COLOR_MAP = {
     BlockType.Icon: (0, 0, 0),  # 黑色
     BlockType.QRCode: (0, 128, 0),  # 绿色
     BlockType.BarCode: (128, 0, 0),  # 深红色
+    BlockType.TextWithEquation: (100, 100, 100),  # 灰色
     BlockType.Unknown: (192, 192, 192),  # 浅灰色
 }
 
@@ -120,6 +124,7 @@ class Block(object):
         self._shape = shape
         self._kind = kind
         self._text: Optional[str] = None
+        self._has_equation: bool = False
 
     @property
     def shape(self) -> Shape:
@@ -132,6 +137,10 @@ class Block(object):
     @property
     def text(self) -> Optional[str]:
         return self._text
+
+    @property
+    def has_equation(self) -> bool:
+        return self._has_equation
 
     def set_text(self, text: str):
         self._text = text
@@ -148,7 +157,7 @@ class Block(object):
         return copy_block
 
     def __str__(self):
-        return f"Block(shape={self._shape}, kind={self._kind}, text={self._text})"
+        return f"Block(shape={self._shape}, kind={self._kind}, text={self._text}, equation={self._has_equation})"
 
     def __repr__(self):
-        return f"Block(shape={self._shape}, kind={self._kind}, text={self._text})"
+        return f"Block(shape={self._shape}, kind={self._kind}, text={self._text}, equation={self._has_equation})"

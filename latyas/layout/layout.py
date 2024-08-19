@@ -153,6 +153,22 @@ class Layout(object):
         blank_page[y1:y2, x1:x2, :] = self._page[y1:y2, x1:x2, :]
         self._page = blank_page
 
+    def draw_bboxs(self, bboxs: List[Rectangle], thickness=2) -> np.ndarray:
+        vis = self._page.copy()
+        for bbox_i, bbox in enumerate(bboxs):
+            x_1 = int(bbox.x_1)
+            x_2 = int(bbox.x_2)
+            y_1 = int(bbox.y_1)
+            y_2 = int(bbox.y_2)
+            cv2.rectangle(
+                vis,
+                (x_1, y_1),
+                (x_2, y_2),
+                BLOCK_TYPE_COLOR_MAP[BlockType.Text],
+                thickness,
+            )
+        return vis
+
     def visualize(self, thickness=2) -> np.ndarray:
         vis = self._page.copy()
         for block_i, block in enumerate(self._blocks):

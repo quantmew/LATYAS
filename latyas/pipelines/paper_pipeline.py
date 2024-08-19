@@ -8,9 +8,10 @@ from latyas.layout.models.ultralytics.ultralytics_layout_model import (
 from latyas.ocr.models.paddleocr.paddleocr_ocr_config import PaddleOCRConfig
 from latyas.ocr.models.paddleocr.paddleocr_ocr_model import PaddleOCRModel
 
-from latyas.ocr.models.texteller.texteller_ocr_config import TexTellerOCRConfig
-from latyas.ocr.models.texteller.texteller_ocr_model import TexTellerOCRModel
-
+from latyas.ocr.models.texteller.texteller_ocr_config import TexTellerTexOCRConfig
+from latyas.ocr.models.texteller.texteller_ocr_model import TexTellerEmbeddingTexOCRModel, TexTellerTexOCRModel
+from latyas.ocr.models.texmix.texmix_model import TexMixMixTexOCRModel
+from latyas.ocr.models.texmix.texmix_config import TexMixMixTexOCRConfig
 
 class PaperPipeline(BasePipeline):
     def __init__(self) -> None:
@@ -29,9 +30,13 @@ class PaperPipeline(BasePipeline):
             ),
         )
 
-        self.add_ocr_model("ocr_paddle", PaddleOCRModel(PaddleOCRConfig(lang="en")))
+        text_model = PaddleOCRModel(PaddleOCRConfig(lang="en"))
+        tex_model = TexTellerTexOCRModel.from_pretrained("OleehyO/TexTeller")
+        embed_tex_model = TexTellerEmbeddingTexOCRModel.from_pretrained("OleehyO/TexTeller")
+        self.add_ocr_model("ocr_paddle", text_model)
+        self.add_ocr_model("ocr_texteller", tex_model)
         self.add_ocr_model(
-            "ocr_texteller", TexTellerOCRModel.from_pretrained("OleehyO/TexTeller")
+            "ocr_texmix", TexMixMixTexOCRModel(embed_tex_model, text_model, TexMixMixTexOCRConfig())
         )
 
         self.add_ocr_rule(BlockType.Title, "ocr_paddle")
@@ -41,3 +46,4 @@ class PaperPipeline(BasePipeline):
         self.add_ocr_rule(BlockType.FigureCaption, "ocr_paddle")
         self.add_ocr_rule(BlockType.Equation, "ocr_texteller")
         self.add_ocr_rule(BlockType.EmbedEq, "ocr_texteller")
+        self.add_ocr_rule(BlockType.TextWithEquation, "ocr_texmix")

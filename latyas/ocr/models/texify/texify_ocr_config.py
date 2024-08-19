@@ -14,11 +14,7 @@
 # limitations under the License.
 
 from typing import Dict, List, Optional
-from latyas.ocr.models.texocr_config import EmbeddingTexOCRConfig, TexOCRConfig
+from latyas.ocr.models.texocr_config import TexOCRConfig
 
-
-class TexTellerTexOCRConfig(TexOCRConfig):
-    model_type: str = "TexTellerTexOCRModel"
-
-class TexTellerEmbeddingTexOCRConfig(EmbeddingTexOCRConfig):
-    model_type: str = "TexTellerEmbeddingTexOCRModel"
+class TexifyTexOCRConfig(TexOCRConfig):
+    model_type: str = "TexifyTexOCRModel"

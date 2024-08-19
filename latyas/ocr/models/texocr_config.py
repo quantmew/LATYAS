@@ -13,12 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Optional
-from latyas.ocr.models.texocr_config import EmbeddingTexOCRConfig, TexOCRConfig
+import json
+import os
+from typing import Any, Dict, Optional, Union
+from latyas.models.latyas_config import LatyasConfig
+from latyas.ocr.models.ocr_config import OCRConfig
 
 
-class TexTellerTexOCRConfig(TexOCRConfig):
-    model_type: str = "TexTellerTexOCRModel"
+class TexOCRConfig(OCRConfig):
+    pass
 
-class TexTellerEmbeddingTexOCRConfig(EmbeddingTexOCRConfig):
-    model_type: str = "TexTellerEmbeddingTexOCRModel"
+
+class EmbeddingTexOCRConfig(OCRConfig):
+    pass
+
+
+class MixTexOCRConfig(OCRConfig):
+    pass

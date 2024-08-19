@@ -1,6 +1,6 @@
 from abc import abstractmethod
 import math
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 
 class Point:
@@ -147,6 +147,27 @@ class Rectangle(Shape):
             )
         else:
             raise Exception("Unsupported intersect shape")
+    
+    def split_x(self, x: float) -> Tuple[Optional[Shape], Optional[Shape]]:
+        if x <= self.x_1:
+            return None, self
+        if x >= self.x_2:
+            return self, None
+        left_rect = self.__class__(self.x_1, self.y_1, x, self.y_2)
+        right_rect = self.__class__(x, self.y_1, self.x_2, self.y_2)
+
+        return left_rect, right_rect
+
+    def split_y(self, y: float) -> Tuple[Optional[Shape], Optional[Shape]]:
+        if y <= self.y_1:
+            return None, self
+        if y >= self.y_2:
+            return self, None
+
+        top_rect = self.__class__(self.x_1, self.y_1, self.x_2, y)
+        bottom_rect = self.__class__(self.x_1, y, self.x_2, self.y_2)
+
+        return top_rect, bottom_rect
 
     def __str__(self):
         return f"Rectangle([{self.x_1}, {self.y_1}], [{self.x_2}, {self.y_2}])"

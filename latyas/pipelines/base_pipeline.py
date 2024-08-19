@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 import pypdfium2
-from typing import Dict, List, Optional
-from latyas.layout.block import BlockType, is_text_block
+from typing import Dict, List, Optional, Tuple, Union
+from latyas.layout.block import Block, BlockType, is_text_block
 from latyas.layout.layout import Layout
 from latyas.layout.models.layout_model import LayoutModel
 from latyas.layout.reflow.position_based.xy_cut_reflow import xy_cut_reflow
@@ -40,6 +40,40 @@ def get_text_by_bbox(
             ).replace("\n", "")
             pdf_text += pdf_text_line
     return pdf_text
+
+
+class BlockRuleKey(object):
+    def __init__(self, kind: BlockType, has_equation: bool = False):
+        self._kind = kind
+        self._has_equation = has_equation
+
+    @property
+    def kind(self):
+        return self._kind
+
+    @kind.setter
+    def kind(self, value):
+        if isinstance(value, BlockType):
+            self._kind = value
+        else:
+            raise TypeError("kind must be a BlockType")
+
+    @property
+    def has_equation(self):
+        return self._has_equation
+
+    @has_equation.setter
+    def has_equation(self, value):
+        if isinstance(value, bool):
+            self._has_equation = value
+        else:
+            raise TypeError("has_equation must be a boolean")
+
+    def __str__(self):
+        return f"BlockRuleKey(kind={self.kind}, has_equation={self.has_equation})"
+
+    def __repr__(self):
+        return f"BlockRuleKey(kind={self.kind}, has_equation={self.has_equation})"
 
 
 class BasePipeline(object):
@@ -108,39 +142,13 @@ class BasePipeline(object):
             
             if not has_embed_eq:
                 continue
-
-            masked_layout = page_layout.copy()
-            snippet_bboxs: List[TextBoundingBox] = []
-            # Get bbox from embedding equations
-            for bbox_j in equations:
-                eq_block = page_layout[bbox_j]
-                if block.kind != BlockType.EmbedEq:
-                    continue
-                if BlockType.EmbedEq in self._ocr_rule:
-                    model_name = self._ocr_rule[BlockType.EmbedEq]
-                    text = self._ocr_models[model_name].recognize(page_layout.crop_image(eq_block))
-                    page_layout[bbox_j].set_text(text)
-                    bbox = TextBoundingBox(eq_block.shape, "$" + text + "$", 1.0)
-                    snippet_bboxs.append(bbox)
-                    masked_layout.mask_image(eq_block)
-                else:
-                    raise Exception(f"Cannot find the OCR model for {eq_block.kind.name}")
-            
-            # Get bbox from text
-            masked_layout.keep_image(page_layout[bbox_text_index])
-            if text_block.kind in self._ocr_rule:
-                model_name = self._ocr_rule[text_block.kind]
-                bboxs = self._ocr_models[model_name].detect(masked_layout._page)
-                snippet_bboxs.extend(bboxs)
+            text_block._has_equation = True
+            if BlockType.TextWithEquation in self._ocr_rule:
+                model_name = self._ocr_rule[BlockType.TextWithEquation]
+                text = self._ocr_models[model_name].recognize(page_layout.crop_image(text_block))
+                page_layout[bbox_text_index].set_text(text)
             else:
-                raise Exception(f"Cannot find the OCR model for {text_block.kind.name}")
-
-            # Reflow bboxs
-            reflow_indices = xy_cut_reflow(snippet_bboxs, margin=1, horizontal_first=False)
-            text_list = []
-            for idx in reflow_indices:
-                text_list.append(snippet_bboxs[idx].text)
-            page_layout[bbox_text_index].set_text(" ".join(text_list))
+                raise Exception(f"Cannot find the OCR model for {block.kind.name}")
 
         # Text OCR
         textpage = page.get_textpage()
@@ -148,17 +156,8 @@ class BasePipeline(object):
             block = page_layout[bbox_i]
             if not is_text_block(block.kind):
                 continue
-            # Check EmbedEq
-            has_embed_eq = False
-            for bbox_j in range(len(page_layout)):
-                if bbox_i == bbox_j:
-                    continue
-                if page_layout[bbox_j].kind == BlockType.EmbedEq and page_layout[
-                    bbox_j
-                ].shape.is_inside(page_layout[bbox_i].shape):
-                    has_embed_eq = True
-            
-            if has_embed_eq:
+
+            if block._has_equation:
                 continue
             x1, y1, x2, y2 = block.shape.boundingbox
             if block.kind in self._ocr_rule:
@@ -178,6 +177,7 @@ class BasePipeline(object):
 
     def analyze_image(self, page_img: np.ndarray) -> Layout:
         height, width =page_img.shape[0], page_img.shape[1]
+        
         # Layout Analysis
         page_layout: Optional[Layout] = None
         for layout_model_name, layout_model in self._layout_models.items():
@@ -188,38 +188,63 @@ class BasePipeline(object):
                 page_layout.merge(each_page_layout)
 
         # Equation OCR
-        embedeq_blocks = []
         for bbox_i in range(len(page_layout)):
             block = page_layout[bbox_i]
-            if block.kind not in (BlockType.Equation, BlockType.EmbedEq):
+            if block.kind not in (BlockType.Equation,):
                 continue
-            if block.kind == BlockType.EmbedEq:
-                if BlockType.EmbedEq in self._ocr_rule:
-                    model_name = self._ocr_rule[BlockType.EmbedEq]
-                    text = self._ocr_models[model_name].detect(page_layout.crop_image(block))
-                    page_layout[bbox_i].set_text(text)
-                    embedeq_blocks.append(block)
-                else:
-                    raise Exception(f"Cannot find the OCR model for {block.kind.name}")
-            elif block.kind == BlockType.Equation:
+            if block.kind == BlockType.Equation:
                 if BlockType.Equation in self._ocr_rule:
                     model_name = self._ocr_rule[BlockType.Equation]
-                    text = self._ocr_models[model_name].detect(page_layout.crop_image(block))
+                    text = self._ocr_models[model_name].recognize(page_layout.crop_image(block))
                     page_layout[bbox_i].set_text(text)
                 else:
                     raise Exception(f"Cannot find the OCR model for {block.kind.name}")
 
-        # Text OCR
-        for bbox_i in range(len(page_layout)):
-            block = page_layout[bbox_i]
-            if block.kind not in (BlockType.Text, BlockType.Title, BlockType.Caption):
+        # Text with Embed Equation
+        for bbox_text_index in range(len(page_layout)):
+            text_block = page_layout[bbox_text_index]
+            if not is_text_block(text_block.kind):
                 continue
-            if block.kind in self._ocr_rule:
-                model_name = self._ocr_rule[block.kind]
-                text = self._ocr_models[model_name].detect(page_layout.crop_image(block))
+            # Check EmbedEq
+            has_embed_eq = False
+            equations = []
+            for bbox_j in range(len(page_layout)):
+                if bbox_text_index == bbox_j:
+                    continue
+                if page_layout[bbox_j].kind == BlockType.EmbedEq and page_layout[
+                    bbox_j
+                ].shape.is_inside(page_layout[bbox_text_index].shape):
+                    has_embed_eq = True
+                    equations.append(bbox_j)
+            
+            if not has_embed_eq:
+                continue
+            text_block._has_equation = True
+            if BlockType.TextWithEquation in self._ocr_rule:
+                model_name = self._ocr_rule[BlockType.TextWithEquation]
+                text = self._ocr_models[model_name].recognize(page_layout.crop_image(text_block))
+                page_layout[bbox_text_index].set_text(text)
             else:
                 raise Exception(f"Cannot find the OCR model for {block.kind.name}")
+
+        # Text OCR
+        textpage = page.get_textpage()
+        for bbox_i in range(len(page_layout)):
+            block = page_layout[bbox_i]
+            if not is_text_block(block.kind):
+                continue
+
+            if block._has_equation:
+                continue
+            x1, y1, x2, y2 = block.shape.boundingbox
+            if block.kind in self._ocr_rule:
+                model_name = self._ocr_rule[block.kind]
+                ocr_text = self._ocr_models[model_name].recognize(page_layout.crop_image(block))
+            else:
+                raise Exception(f"Cannot find the OCR model for {block.kind.name}")
+            text = ocr_text
             block.set_text(text)
+        textpage.close()
 
         # Reflow
         sorted_block_indices = xy_cut_reflow(page_layout)
