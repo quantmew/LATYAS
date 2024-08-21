@@ -228,7 +228,6 @@ class BasePipeline(object):
                 raise Exception(f"Cannot find the OCR model for {block.kind.name}")
 
         # Text OCR
-        textpage = page.get_textpage()
         for bbox_i in range(len(page_layout)):
             block = page_layout[bbox_i]
             if not is_text_block(block.kind):
@@ -244,7 +243,6 @@ class BasePipeline(object):
                 raise Exception(f"Cannot find the OCR model for {block.kind.name}")
             text = ocr_text
             block.set_text(text)
-        textpage.close()
 
         # Reflow
         sorted_block_indices = xy_cut_reflow(page_layout)
