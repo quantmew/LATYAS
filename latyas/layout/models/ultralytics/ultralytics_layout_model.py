@@ -59,7 +59,7 @@ class UltralyticsLayoutModel(LayoutModel):
 
         page_layout = Layout(page=image_array)
 
-        results = self.model.predict(source=image_array)
+        results = self.model.predict(source=image_array, verbose=False)
         if len(results) != 1:
             raise Exception("The number of prediction results is not one.")
         result = results[0]
