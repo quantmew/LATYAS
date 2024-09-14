@@ -28,7 +28,7 @@ from latyas.layout.models.texteller.det_model.inference import predict as latex_
 from latyas.layout.models.texteller.texteller_layout_model import TexTellerLayoutModel
 from latyas.layout.shape import Rectangle
 from latyas.ocr.models.ocr_model import OCRModel
-from latyas.ocr.models.texocr_model import EmbeddingTexOCRModel, TexOCRModel
+from latyas.tex_ocr.models.texocr_model import EmbeddingTexOCRModel, TexOCRModel
 from latyas.ocr.ocr_utils import small_image_padding
 from latyas.ocr.text_bbox import TextBoundingBox
 from .texify_ocr_config import TexifyTexOCRConfig
@@ -58,7 +58,7 @@ class TexifyTexOCRModel(TexOCRModel):
         elif isinstance(image, np.ndarray):
             image_array = image
 
-        return bboxs
+        raise NotImplementedError("Detect method of texify is not implemented.")
 
     def recognize(self, image: Union["np.ndarray", "Image.Image"], num_beam=5) -> str:
         if isinstance(image, Image.Image):

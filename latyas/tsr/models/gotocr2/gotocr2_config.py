@@ -14,7 +14,10 @@
 # limitations under the License.
 
 from typing import Dict, List, Optional
-from latyas.ocr.models.texocr_config import TexOCRConfig
 
-class TexifyTexOCRConfig(TexOCRConfig):
-    model_type: str = "TexifyTexOCRModel"
+from latyas.tsr.models.tsr_config import TSRConfig
+
+class GOTOCR2TSRConfig(TSRConfig):
+    model_type: str = "GOTOCR2TSRModel"
+
+

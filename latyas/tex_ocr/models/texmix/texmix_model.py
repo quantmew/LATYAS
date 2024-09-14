@@ -30,8 +30,8 @@ from latyas.layout.models.texteller.texteller_layout_model import TexTellerLayou
 from latyas.layout.reflow.position_based.xy_cut_reflow import xy_cut_reflow
 from latyas.layout.shape import Rectangle
 from latyas.ocr.models.ocr_model import OCRModel
-from latyas.ocr.models.texmix.texmix_config import TexMixMixTexOCRConfig
-from latyas.ocr.models.texocr_model import EmbeddingTexOCRModel, MixTexOCRModel, TexOCRModel
+from latyas.tex_ocr.models.texmix.texmix_config import TexMixMixTexOCRConfig
+from latyas.tex_ocr.models.texocr_model import EmbeddingTexOCRModel, MixTexOCRModel, TexOCRModel
 from latyas.ocr.ocr_utils import small_image_padding
 from latyas.ocr.text_bbox import TextBoundingBox
 

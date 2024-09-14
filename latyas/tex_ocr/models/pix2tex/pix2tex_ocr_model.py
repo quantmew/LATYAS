@@ -16,24 +16,27 @@ import os
 import cv2
 import numpy as np
 from PIL import Image
-from typing import Optional, Union
+from typing import List, Optional, Union
 
+import torch
+from onnxruntime import InferenceSession
+
+from latyas.layout.block import BlockType
+from latyas.layout.shape import Rectangle
 from latyas.ocr.models.ocr_model import OCRModel
+from latyas.tex_ocr.models.texocr_model import EmbeddingTexOCRModel, TexOCRModel
 from latyas.ocr.ocr_utils import small_image_padding
-from latyas.tsr.models.tsr_model import TSRModel
-from .tatr_tsr_config import TatrTSRConfig
+from latyas.ocr.text_bbox import TextBoundingBox
+from .pix2tex_ocr_config import Pix2TexTexOCRConfig
 
-class TatrTSRModel(TSRModel):
-    def __init__(self, config: TatrTSRConfig) -> None:
+from pix2tex.cli import LatexOCR
+
+class Pix2TexTexOCRModel(TexOCRModel):
+    def __init__(self, config: Pix2TexTexOCRConfig) -> None:
         self.config = config
         self._name_or_path = config._name_or_path
-        
-        pipe = TableExtractionPipeline(det_device=args.detection_device,
-                            str_device=args.structure_device,
-                            det_config_path=args.detection_config_path, 
-                            det_model_path=args.detection_model_path,
-                            str_config_path=args.structure_config_path, 
-                            str_model_path=args.structure_model_path)
+
+        self.model = LatexOCR()
 
     @classmethod
     def from_pretrained(
@@ -41,21 +44,29 @@ class TatrTSRModel(TSRModel):
         pretrained_model_name_or_path: Union[str, os.PathLike],
         revision: str = "main",
         **kwargs,
-    ) -> "TatrTSRModel":
-        config = TatrTSRConfig.from_pretrained(pretrained_model_name_or_path)
+    ) -> "Pix2TexTexOCRModel":
+        config = Pix2TexTexOCRConfig.from_pretrained(pretrained_model_name_or_path)
         config._name_or_path = pretrained_model_name_or_path
         config._revision = revision
         return cls(config)
 
-    def detect(self, image: Union["np.ndarray", "Image.Image"], num_beam=5) -> str:
+    def detect(
+        self, image: Union["np.ndarray", "Image.Image"]
+    ) -> List[TextBoundingBox]:
+        if isinstance(image, Image.Image):
+            image_array = np.array(image)
+        elif isinstance(image, np.ndarray):
+            image_array = image
+        raise NotImplementedError("Detect method of pix2tex is not implemented.")
+
+    def recognize(self, image: Union["np.ndarray", "Image.Image"], num_beam=5) -> str:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
         elif isinstance(image, np.ndarray):
             image_array = image
         else:
             image_array = image
-        
-        
 
-
-        return res
+        pil_image = Image.fromarray(image_array)
+        ret = self.model(pil_image)
+        return ret

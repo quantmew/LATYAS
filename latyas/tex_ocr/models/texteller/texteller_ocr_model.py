@@ -28,7 +28,7 @@ from latyas.layout.models.texteller.det_model.inference import predict as latex_
 from latyas.layout.models.texteller.texteller_layout_model import TexTellerLayoutModel
 from latyas.layout.shape import Rectangle
 from latyas.ocr.models.ocr_model import OCRModel
-from latyas.ocr.models.texocr_model import EmbeddingTexOCRModel, TexOCRModel
+from latyas.tex_ocr.models.texocr_model import EmbeddingTexOCRModel, TexOCRModel
 from latyas.ocr.ocr_utils import small_image_padding
 from latyas.ocr.text_bbox import TextBoundingBox
 from .texteller_ocr_config import TexTellerTexOCRConfig, TexTellerEmbeddingTexOCRConfig

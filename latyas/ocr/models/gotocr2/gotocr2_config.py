@@ -16,8 +16,9 @@
 from typing import Dict, List, Optional
 
 from latyas.ocr.models.ocr_config import OCRConfig
-from latyas.tsr.models.tsr_config import TSRConfig
 
 
-class TatrTSRConfig(TSRConfig):
-    model_type: str = "TatrTSRModel"
+class GOTOCR2OCRConfig(OCRConfig):
+    model_type: str = "GOTOCR2OCRModel"
+
+

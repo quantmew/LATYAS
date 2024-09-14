@@ -14,10 +14,8 @@
 # limitations under the License.
 
 from typing import Dict, List, Optional
-
-from latyas.ocr.models.ocr_config import OCRConfig
-from latyas.tsr.models.tsr_config import TSRConfig
+from latyas.tex_ocr.models.texocr_config import MixTexOCRConfig
 
 
-class TatrTSRConfig(TSRConfig):
-    model_type: str = "TatrTSRModel"
+class TexMixMixTexOCRConfig(MixTexOCRConfig):
+    model_type: str = "TexMixMixTexOCRConfig"

@@ -19,35 +19,40 @@ from PIL import Image
 from typing import Optional, Union
 
 from latyas.ocr.models.ocr_model import OCRModel
-from latyas.ocr.ocr_utils import small_image_padding
-from latyas.tsr.models.tsr_model import TSRModel
-from .tatr_tsr_config import TatrTSRConfig
+from .gotocr2_config import GOTOCR2OCRConfig
 
-class TatrTSRModel(TSRModel):
-    def __init__(self, config: TatrTSRConfig) -> None:
+from transformers import AutoModel, AutoTokenizer
+
+class GOTOCR2OCRModel(OCRModel):
+    def __init__(self, config: GOTOCR2OCRConfig) -> None:
         self.config = config
         self._name_or_path = config._name_or_path
-        
-        pipe = TableExtractionPipeline(det_device=args.detection_device,
-                            str_device=args.structure_device,
-                            det_config_path=args.detection_config_path, 
-                            det_model_path=args.detection_model_path,
-                            str_config_path=args.structure_config_path, 
-                            str_model_path=args.structure_model_path)
 
+        self.device = "cuda"
+        self.tokenizer = AutoTokenizer.from_pretrained(self._name_or_path, trust_remote_code=True)
+        self.model = AutoModel.from_pretrained(
+            self._name_or_path,
+            trust_remote_code=True,
+            low_cpu_mem_usage=True,
+            device_map=self.device,
+            use_safetensors=True,
+            pad_token_id=self.tokenizer.eos_token_id
+        )
+        self.model = self.model.eval().to(self.device)
+                
     @classmethod
     def from_pretrained(
         cls,
         pretrained_model_name_or_path: Union[str, os.PathLike],
         revision: str = "main",
         **kwargs,
-    ) -> "TatrTSRModel":
-        config = TatrTSRConfig.from_pretrained(pretrained_model_name_or_path)
+    ) -> "GOTOCR2OCRModel":
+        config = GOTOCR2OCRConfig.from_pretrained(pretrained_model_name_or_path)
         config._name_or_path = pretrained_model_name_or_path
         config._revision = revision
         return cls(config)
 
-    def detect(self, image: Union["np.ndarray", "Image.Image"], num_beam=5) -> str:
+    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> str:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
         elif isinstance(image, np.ndarray):
@@ -55,7 +60,7 @@ class TatrTSRModel(TSRModel):
         else:
             image_array = image
         
-        
+        pil_image = Image.fromarray(image_array)
 
-
+        res = self.model.chat(self.tokenizer, pil_image, ocr_type='ocr', gradio_input=True)
         return res
