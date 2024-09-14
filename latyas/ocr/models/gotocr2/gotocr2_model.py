@@ -19,6 +19,7 @@ from PIL import Image
 from typing import Optional, Union
 
 from latyas.ocr.models.ocr_model import OCRModel
+from latyas.ocr.ocr_utils import small_image_padding
 from .gotocr2_config import GOTOCR2OCRConfig
 
 from transformers import AutoModel, AutoTokenizer
@@ -38,7 +39,8 @@ class GOTOCR2OCRModel(OCRModel):
             use_safetensors=True,
             pad_token_id=self.tokenizer.eos_token_id
         )
-        self.model = self.model.eval().to(self.device)
+        self.model = self.model.to(self.device)
+        self.model.eval()
                 
     @classmethod
     def from_pretrained(
@@ -52,15 +54,14 @@ class GOTOCR2OCRModel(OCRModel):
         config._revision = revision
         return cls(config)
 
-    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> str:
+    def recognize(self, image: Union["np.ndarray", "Image.Image"]) -> str:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
         elif isinstance(image, np.ndarray):
             image_array = image
         else:
             image_array = image
-        
-        pil_image = Image.fromarray(image_array)
 
+        pil_image = Image.fromarray(image_array)
         res = self.model.chat(self.tokenizer, pil_image, ocr_type='ocr', gradio_input=True)
         return res

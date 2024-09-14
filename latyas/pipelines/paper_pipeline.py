@@ -33,9 +33,10 @@ class PaperPipeline(BasePipeline):
         )
 
         text_model = PaddleOCRModel(PaddleOCRConfig(lang="en"))
+        llm_text_model = GOTOCR2OCRModel.from_pretrained('ucaslcl/GOT-OCR2_0')
         tex_model = TexTellerTexOCRModel.from_pretrained("OleehyO/TexTeller")
         embed_tex_model = TexTellerEmbeddingTexOCRModel.from_pretrained("OleehyO/TexTeller")
-        self.add_ocr_model("ocr_paddle", text_model)
+        self.add_ocr_model("ocr_paddle", llm_text_model)
         self.add_ocr_model("ocr_texteller", tex_model)
         self.add_ocr_model(
             "ocr_texmix", TexMixMixTexOCRModel(embed_tex_model, text_model, TexMixMixTexOCRConfig())
@@ -49,8 +50,12 @@ class PaperPipeline(BasePipeline):
         self.add_ocr_rule(BlockType.TableCaption, "ocr_paddle")
         self.add_ocr_rule(BlockType.FigureCaption, "ocr_paddle")
         self.add_ocr_rule(BlockType.Reference, "ocr_paddle")
+        self.add_ocr_rule(BlockType.Header, "ocr_paddle")
+        self.add_ocr_rule(BlockType.Footer, "ocr_paddle")
         
         self.add_ocr_rule(BlockType.Equation, "ocr_texteller")
         self.add_ocr_rule(BlockType.EmbedEq, "ocr_texteller")
         self.add_ocr_rule(BlockType.TextWithEquation, "ocr_texmix")
         self.add_ocr_rule(BlockType.Table, "tsr_gotocr2")
+        
+        
