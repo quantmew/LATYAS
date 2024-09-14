@@ -15,9 +15,9 @@ import os
 import sys
 from PIL import Image
 
-__dir__ = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(__dir__)
-sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "../..")))
+# __dir__ = os.path.dirname(os.path.abspath(__file__))
+# sys.path.append(__dir__)
+# sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "../..")))
 
 os.environ["FLAGS_allocator_strategy"] = "auto_growth"
 
@@ -28,7 +28,7 @@ import time
 
 from .utility import create_predictor, get_logger
 
-from CTCLabelDecode import CTCLabelDecode
+from .CTCLabelDecode import CTCLabelDecode
 
 logger = get_logger()
 

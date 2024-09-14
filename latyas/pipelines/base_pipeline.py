@@ -149,7 +149,22 @@ class BasePipeline(object):
                 page_layout[bbox_text_index].set_text(text)
             else:
                 raise Exception(f"Cannot find the OCR model for {block.kind.name}")
+        
+        # Table OCR
+        for bbox_i in range(len(page_layout)):
+            block = page_layout[bbox_i]
+            if block.kind != BlockType.Table:
+                continue
 
+            x1, y1, x2, y2 = block.shape.boundingbox
+            if block.kind in self._ocr_rule:
+                model_name = self._ocr_rule[block.kind]
+                ocr_text = self._ocr_models[model_name].recognize(page_layout.crop_image(block))
+            else:
+                raise Exception(f"Cannot find the Table OCR model for {block.kind.name}")
+            text = ocr_text
+            block.set_text(text)
+        
         # Text OCR
         textpage = page.get_textpage()
         for bbox_i in range(len(page_layout)):

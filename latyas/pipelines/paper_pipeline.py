@@ -1,6 +1,7 @@
 from latyas.layout.block import BlockType
 from latyas.layout.models.texteller.texteller_layout_config import TexTellerLayoutConfig
 from latyas.layout.models.texteller.texteller_layout_model import TexTellerLayoutModel
+from latyas.ocr.models.gotocr2.gotocr2_model import GOTOCR2OCRModel
 from latyas.pipelines.base_pipeline import BasePipeline
 from latyas.layout.models.ultralytics.ultralytics_layout_model import (
     UltralyticsLayoutModel,
@@ -8,10 +9,11 @@ from latyas.layout.models.ultralytics.ultralytics_layout_model import (
 from latyas.ocr.models.paddleocr.paddleocr_ocr_config import PaddleOCRConfig
 from latyas.ocr.models.paddleocr.paddleocr_ocr_model import PaddleOCRModel
 
-from latyas.ocr.models.texteller.texteller_ocr_config import TexTellerTexOCRConfig
-from latyas.ocr.models.texteller.texteller_ocr_model import TexTellerEmbeddingTexOCRModel, TexTellerTexOCRModel
-from latyas.ocr.models.texmix.texmix_model import TexMixMixTexOCRModel
-from latyas.ocr.models.texmix.texmix_config import TexMixMixTexOCRConfig
+from latyas.tex_ocr.models.texteller.texteller_ocr_config import TexTellerTexOCRConfig
+from latyas.tex_ocr.models.texteller.texteller_ocr_model import TexTellerEmbeddingTexOCRModel, TexTellerTexOCRModel
+from latyas.tex_ocr.models.texmix.texmix_model import TexMixMixTexOCRModel
+from latyas.tex_ocr.models.texmix.texmix_config import TexMixMixTexOCRConfig
+from latyas.tsr.models.gotocr2.gotocr2_model import GOTOCR2TSRModel
 
 class PaperPipeline(BasePipeline):
     def __init__(self) -> None:
@@ -19,7 +21,7 @@ class PaperPipeline(BasePipeline):
         self.add_layout_model(
             "layout_360general",
             UltralyticsLayoutModel.from_pretrained(
-                "XiaHan19/360LayoutAnalysis-general6-8n"
+                "XiaHan19/360LayoutAnalysis-paper-8n"
             ),
         )
 
@@ -38,12 +40,17 @@ class PaperPipeline(BasePipeline):
         self.add_ocr_model(
             "ocr_texmix", TexMixMixTexOCRModel(embed_tex_model, text_model, TexMixMixTexOCRConfig())
         )
-
+        table_model = GOTOCR2TSRModel.from_pretrained('ucaslcl/GOT-OCR2_0')
+        self.add_ocr_model("tsr_gotocr2", table_model)
+        
         self.add_ocr_rule(BlockType.Title, "ocr_paddle")
         self.add_ocr_rule(BlockType.Text, "ocr_paddle")
         self.add_ocr_rule(BlockType.Caption, "ocr_paddle")
         self.add_ocr_rule(BlockType.TableCaption, "ocr_paddle")
         self.add_ocr_rule(BlockType.FigureCaption, "ocr_paddle")
+        self.add_ocr_rule(BlockType.Reference, "ocr_paddle")
+        
         self.add_ocr_rule(BlockType.Equation, "ocr_texteller")
         self.add_ocr_rule(BlockType.EmbedEq, "ocr_texteller")
         self.add_ocr_rule(BlockType.TextWithEquation, "ocr_texmix")
+        self.add_ocr_rule(BlockType.Table, "tsr_gotocr2")

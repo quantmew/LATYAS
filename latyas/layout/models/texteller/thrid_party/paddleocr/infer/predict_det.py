@@ -14,9 +14,9 @@
 import os
 import sys
 
-__dir__ = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(__dir__)
-sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "../..")))
+# __dir__ = os.path.dirname(os.path.abspath(__file__))
+# sys.path.append(__dir__)
+# sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "../..")))
 
 os.environ["FLAGS_allocator_strategy"] = "auto_growth"
 
@@ -28,8 +28,8 @@ import sys
 # import tools.infer.utility as utility
 from .utility import create_predictor, get_logger
 
-from DBPostProcess import DBPostProcess
-from operators import DetResizeForTest, KeepKeys, NormalizeImage, ToCHWImage
+from .DBPostProcess import DBPostProcess
+from .operators import DetResizeForTest, KeepKeys, NormalizeImage, ToCHWImage
 
 
 def transform(data, ops=None):

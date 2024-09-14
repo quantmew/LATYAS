@@ -6,8 +6,8 @@ from latyas.layout.models.ultralytics.ultralytics_layout_model import (
 from latyas.ocr.models.paddleocr.paddleocr_ocr_config import PaddleOCRConfig
 from latyas.ocr.models.paddleocr.paddleocr_ocr_model import PaddleOCRModel
 
-from latyas.ocr.models.texteller.texteller_ocr_config import TexTellerTexOCRConfig
-from latyas.ocr.models.texteller.texteller_ocr_model import TexTellerTexOCRModel
+from latyas.tex_ocr.models.texteller.texteller_ocr_config import TexTellerTexOCRConfig
+from latyas.tex_ocr.models.texteller.texteller_ocr_model import TexTellerTexOCRModel
 
 
 class ReportPipeline(BasePipeline):

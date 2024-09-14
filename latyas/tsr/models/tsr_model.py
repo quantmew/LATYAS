@@ -25,5 +25,5 @@ class TSRModel(LatyasModel):
         pass
 
     @abstractmethod
-    def detect(self, image: Union["np.ndarray", "Image.Image"]) -> str:
+    def recognize(self, image: Union["np.ndarray", "Image.Image"]) -> str:
         pass

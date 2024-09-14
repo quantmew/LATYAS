@@ -74,4 +74,5 @@ class GOTOCR2TSRModel(TSRModel):
         pil_image = Image.fromarray(image_array)
 
         res = self.model.chat(self.tokenizer, pil_image, ocr_type='format', gradio_input=True)
+        print(res)
         return res

@@ -27,9 +27,9 @@ if not os.path.exists(output_path):
     os.makedirs(output_path, exist_ok=True)
 
 
-file_path = "report2.pdf"
+file_path = "report5.pdf"
 pages = pdf2image.convert_from_path(file_path)
-for page_number, page in enumerate(pages):
+for page_number, page in enumerate(tqdm.tqdm(pages)):
     page_img = np.asarray(page)
     page_shape = page_img.shape # (h, w, c)
     sf = (page_shape[0] // 256, page_shape[1] // 3)

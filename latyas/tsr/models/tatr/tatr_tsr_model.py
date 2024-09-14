@@ -47,15 +47,12 @@ class TatrTSRModel(TSRModel):
         config._revision = revision
         return cls(config)
 
-    def detect(self, image: Union["np.ndarray", "Image.Image"], num_beam=5) -> str:
+    def recognize(self, image: Union["np.ndarray", "Image.Image"], num_beam=5) -> str:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
         elif isinstance(image, np.ndarray):
             image_array = image
         else:
             image_array = image
-        
-        
-
 
         return res

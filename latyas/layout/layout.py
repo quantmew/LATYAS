@@ -94,8 +94,8 @@ class Layout(object):
                 if not isinstance(block_rhs.shape, Rectangle):
                     continue
                 
-                if not (is_text_block(block_lhs.kind) and is_text_block(block_rhs.kind)):
-                    if block_lhs.kind != block_rhs.kind:
+                if block_lhs.kind != block_rhs.kind:
+                    if not (is_text_block(block_lhs.kind) and is_text_block(block_rhs.kind)):
                         continue
 
                 intersect_rect = block_lhs.shape.intersect(block_rhs.shape)
