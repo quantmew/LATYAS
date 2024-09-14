@@ -100,6 +100,8 @@ def is_text_block(block_type: BlockType) -> bool:
         BlockType.TableCaption,
         BlockType.Title,
         BlockType.Reference,
+        BlockType.Header,
+        BlockType.Footer,
     ]
 
 
