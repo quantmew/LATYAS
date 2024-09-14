@@ -109,6 +109,7 @@ class BasePipeline(object):
                 page_layout = each_page_layout
             else:
                 page_layout.merge(each_page_layout)
+        page_layout.remove_overlapping(strategy="merge")
 
         # Equation OCR
         for bbox_i in range(len(page_layout)):
@@ -201,6 +202,7 @@ class BasePipeline(object):
                 page_layout = each_page_layout
             else:
                 page_layout.merge(each_page_layout)
+        page_layout.remove_overlapping(strategy="merge")
 
         # Equation OCR
         for bbox_i in range(len(page_layout)):

@@ -86,6 +86,8 @@ class Layout(object):
     def remove_overlapping(self, area_threshold=0.5, strategy: Literal["keep_large", "keep_small", "merge"]="merge"):
         to_remove = []
         for block_i in range(len(self._blocks)):
+            if block_i in to_remove:
+                continue
             for block_j in range(block_i + 1, len(self._blocks)):
                 block_lhs = self._blocks[block_i]
                 block_rhs = self._blocks[block_j]
