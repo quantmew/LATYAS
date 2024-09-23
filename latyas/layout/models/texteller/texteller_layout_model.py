@@ -41,12 +41,12 @@ class TexTellerLayoutModel(LayoutModel):
         if os.path.exists(self._name_or_path):
             self.cfg_path = os.path.join(self._name_or_path, self._cfg_name)
         else:
-            self.cfg_path = hf_hub_download(repo_id=self._name_or_path, filename=self._cfg_name)
+            self.cfg_path = hf_hub_download(repo_id=self._name_or_path, filename=self._cfg_name, revision=self.config._revision)
         
         if os.path.exists(self._name_or_path):
             self.weights_path = os.path.join(self._name_or_path, self._weights_name)
         else:
-            self.weights_path = hf_hub_download(repo_id=self._name_or_path, filename=self._weights_name)
+            self.weights_path = hf_hub_download(repo_id=self._name_or_path, filename=self._weights_name, revision=self.config._revision)
 
     @classmethod
     def from_pretrained(

@@ -24,23 +24,27 @@ from .gotocr2_config import GOTOCR2TSRConfig
 
 from transformers import AutoModel, AutoTokenizer
 
+
 class GOTOCR2TSRModel(TSRModel):
     def __init__(self, config: GOTOCR2TSRConfig) -> None:
         self.config = config
         self._name_or_path = config._name_or_path
 
         self.device = "cuda"
-        self.tokenizer = AutoTokenizer.from_pretrained(self._name_or_path, trust_remote_code=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self._name_or_path, revision=config._revision, trust_remote_code=True
+        )
         self.model = AutoModel.from_pretrained(
             self._name_or_path,
+            revision=config._revision,
             trust_remote_code=True,
             low_cpu_mem_usage=True,
             device_map=self.device,
             use_safetensors=True,
-            pad_token_id=self.tokenizer.eos_token_id
+            pad_token_id=self.tokenizer.eos_token_id,
         )
         self.model = self.model.eval().to(self.device)
-                
+
     @classmethod
     def from_pretrained(
         cls,
@@ -62,7 +66,6 @@ class GOTOCR2TSRModel(TSRModel):
             image_array = image
         raise NotImplementedError("Detect method of GOT-OCR2 is not implemented.")
 
-
     def recognize(self, image: Union["np.ndarray", "Image.Image"]) -> str:
         if isinstance(image, Image.Image):
             image_array = np.array(image)
@@ -70,7 +73,7 @@ class GOTOCR2TSRModel(TSRModel):
             image_array = image
         else:
             image_array = image
-        
+
         pil_image = Image.fromarray(image_array)
 
         res = self.model.chat(self.tokenizer, pil_image, ocr_type='format', gradio_input=True)

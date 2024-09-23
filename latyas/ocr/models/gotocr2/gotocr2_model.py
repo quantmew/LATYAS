@@ -30,9 +30,12 @@ class GOTOCR2OCRModel(OCRModel):
         self._name_or_path = config._name_or_path
 
         self.device = "cuda"
-        self.tokenizer = AutoTokenizer.from_pretrained(self._name_or_path, trust_remote_code=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self._name_or_path, revision=config._revision, trust_remote_code=True
+        )
         self.model = AutoModel.from_pretrained(
             self._name_or_path,
+            revision=config._revision,
             trust_remote_code=True,
             low_cpu_mem_usage=True,
             device_map=self.device,
@@ -41,7 +44,7 @@ class GOTOCR2OCRModel(OCRModel):
         )
         self.model = self.model.to(self.device)
         self.model.eval()
-                
+
     @classmethod
     def from_pretrained(
         cls,

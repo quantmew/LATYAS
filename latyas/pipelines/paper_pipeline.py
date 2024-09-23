@@ -33,7 +33,7 @@ class PaperPipeline(BasePipeline):
         )
 
         text_model = PaddleOCRModel(PaddleOCRConfig(lang="en"))
-        llm_text_model = GOTOCR2OCRModel.from_pretrained('ucaslcl/GOT-OCR2_0')
+        llm_text_model = GOTOCR2OCRModel.from_pretrained('stepfun-ai/GOT-OCR2_0', revision="cf6b7386bc89a54f09785612ba74cb12de6fa17c")
         tex_model = TexTellerTexOCRModel.from_pretrained("OleehyO/TexTeller")
         embed_tex_model = TexTellerEmbeddingTexOCRModel.from_pretrained("OleehyO/TexTeller")
         self.add_ocr_model("ocr_paddle", llm_text_model)
@@ -41,7 +41,7 @@ class PaperPipeline(BasePipeline):
         self.add_ocr_model(
             "ocr_texmix", TexMixMixTexOCRModel(embed_tex_model, text_model, TexMixMixTexOCRConfig())
         )
-        table_model = GOTOCR2TSRModel.from_pretrained('ucaslcl/GOT-OCR2_0')
+        table_model = GOTOCR2TSRModel.from_pretrained('stepfun-ai/GOT-OCR2_0', revision="cf6b7386bc89a54f09785612ba74cb12de6fa17c")
         self.add_ocr_model("tsr_gotocr2", table_model)
         
         self.add_ocr_rule(BlockType.Title, "ocr_paddle")
